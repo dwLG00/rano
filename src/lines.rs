@@ -68,6 +68,52 @@ impl LineArena {
         return self.add_empty_line(self.length - 1);
     }
 
+    pub fn pop(&mut self, idx: usize) -> Option<Index> {
+        // Pops the line at index
+
+        if idx < 0 || idx >= self.length {
+            panic!();
+        }
+
+        self.seek(idx);
+        let arena = &mut self.arena;
+
+        if let Some(cursor) = self.cursor {
+            if let Some(prev) = arena[cursor].prevline {
+                arena[prev].nextline = arena[cursor].nextline;
+            } else {
+                // cursor is head; move head to the next value
+                self.head = arena[cursor].nextline.take();
+            }
+            if let Some(next) = arena[cursor].nextline {
+                arena[next].prevline = arena[cursor].prevline;
+                self.cursor = arena[cursor].nextline.take();
+                // self.cursor_pos stays the same
+            } else {
+                self.cursor = arena[cursor].prevline.take();
+                if self.cursor_pos > 0 {
+                    // Only decrement cursor_pos if it doens't take the implicit None
+                    self.cursor_pos -= 1;
+                }
+            }
+            
+            arena[cursor].nextline = None;
+            arena[cursor].prevline = None;
+            // Move over the cursor reference
+            Some(cursor)
+        } else {
+            None
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        return self.length;
+    }
+
+    pub fn cursor_loc(&self) -> usize {
+        return self.cursor_pos;
+    }
+
     fn seek(&mut self, idx: usize) {
         // Moves cursor to index
 
@@ -117,6 +163,10 @@ pub struct Line {
 
 impl Line {
     pub fn new() -> Line {
-        Line{ prevline: None, nextline: None, content: Vec::new() }
+        Line { prevline: None, nextline: None, content: Vec::new() }
+    }
+
+    pub fn new_from(content: Vec<char>) -> Line {
+        Line { prevline: None, nextline: None, content: content }
     }
 }
