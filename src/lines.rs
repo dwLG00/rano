@@ -10,7 +10,6 @@ pub struct LineArena {
 
 impl LineArena {
     pub fn new() -> LineArena {
-        //LineArena{arena: Arena::new(), head: None, cursor: None, length: 0, cursor_pos: 0}
         LineArena{arena: Arena::new(), head: None, length: 0}
     }
 
@@ -51,24 +50,6 @@ impl LineArena {
                     arena[line_index].prevline = Some(line_index);
                 }
             }
-            /*
-            // seek cursor to target index
-            self.seek(idx);
-            // reborrow self.arena (we used it once for self.seek)
-            arena = &mut self.arena;
-
-            if let Some(cursor_index) = self.cursor {
-                // cursor <-> line mutual reference exchange
-                arena[line].nextline = arena[cursor_index].nextline.take();
-                arena[cursor_index].nextline = Some(line);
-
-                // cursor.nextline <-> line mutual reference exchange
-                if let Some(line_index) = arena[cursor_index].nextline {
-                    arena[line].prevline = arena[line_index].prevline.take();
-                    arena[line_index].prevline = Some(line_index);
-                }
-            }
-            */
         }
         self.length += 1;
         return line;
@@ -129,82 +110,11 @@ impl LineArena {
                 return None;
             }
         }
-
-        /*
-        if let Some(cursor) = self.cursor {
-            if let Some(prev) = arena[cursor].prevline {
-                arena[prev].nextline = arena[cursor].nextline;
-            } else {
-                // cursor is head; move head to the next value
-                self.head = arena[cursor].nextline.take();
-            }
-            if let Some(next) = arena[cursor].nextline {
-                arena[next].prevline = arena[cursor].prevline;
-                self.cursor = arena[cursor].nextline.take();
-                // self.cursor_pos stays the same
-            } else {
-                self.cursor = arena[cursor].prevline.take();
-                if self.cursor_pos > 0 {
-                    // Only decrement cursor_pos if it doens't take the implicit None
-                    self.cursor_pos -= 1;
-                }
-            }
-            
-            arena[cursor].nextline = None;
-            arena[cursor].prevline = None;
-            // Move over the cursor reference
-            Some(cursor)
-        } else {
-            None
-        }
-        */
     }
 
     pub fn len(&self) -> usize {
         return self.length;
     }
-
-    /*
-    fn seek(&mut self, idx: usize) {
-        // Moves cursor to index
-
-        // Out of bounds
-        if idx < 0 || idx >= self.length {
-            panic!();
-        }
-
-        // Cursor already at index
-        if self.cursor_pos == idx {
-            return;
-        } else if self.cursor_pos < idx {
-            // index closer to cursor than beginning
-            while self.cursor_pos < idx {
-                if let Some(cursor_index) = self.cursor {
-                    self.cursor = self.arena[cursor_index].nextline;
-                    self.cursor_pos += 1
-                }
-            }
-        } else if self.cursor_pos < idx * 2 {
-            // cursor > idx, but index still closer to cursor than beginning
-            while self.cursor_pos > idx {
-                if let Some(cursor_index) = self.cursor {
-                    self.cursor = self.arena[cursor_index].prevline;
-                    self.cursor_pos -= 1
-                }
-            }
-        } else {
-            // index closer to beginning than cursor
-            self.cursor = self.head;
-            self.cursor_pos = 0;
-            while self.cursor_pos < idx {
-                if let Some(cursor_index) = self.cursor {
-                    self.cursor = self.arena[cursor_index].nextline;
-                    self.cursor_pos += 1
-                }
-            }
-        }
-    }
-    */
 }
 
 pub struct Line {
