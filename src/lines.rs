@@ -20,7 +20,7 @@ impl LineArena {
         self.insert(line, idx)
     }
 
-    pub fn insert(&self, line: Line, idx: usize) -> Index {
+    pub fn insert(&mut self, line: Line, idx: usize) -> Index {
         // Inserts line at given position
 
         let arena = &mut self.arena;
@@ -117,6 +117,42 @@ impl LineArena {
         }
     }
 
+    pub fn swap(&mut self, index1: Index, index2: Index) {
+        let arena = &mut self.arena;
+        if let (Some(line1), Some(line2)) = arena.get2_mut(index1, index2) {
+            // Exchange links
+            let line1_next = line1.nextline.take();
+            let line1_prev = line1.prevline.take();
+            let line2_next = line2.nextline.take(); 
+            let line2_prev = line2.prevline.take();
+
+            // Swap the links leading in
+            if let Some(l1_next) = line1_next {
+                arena[l1_next].prevline = Some(index2);
+            }
+            if let Some(l2_next) = line2_next {
+                arena[l2_next].prevline = Some(index1);
+            }
+            if let Some(l1_prev) = line1_prev {
+                arena[l1_prev].nextline = Some(index2);
+            }
+            if let Some(l2_prev) = line2_prev {
+                arena[l2_prev].nextline = Some(index1);
+            }
+
+            // Swap links leading out
+            if let (Some(line1), Some(line2)) = arena.get2_mut(index1, index2) {
+                line1.nextline = line2_next; 
+                line1.prevline = line2_prev;
+                line2.nextline = line1_next;
+                line2.prevline = line1_prev;
+            }
+
+        } else {
+            // Indices not found!
+            panic!();
+        }
+    }
 
     pub fn len(&self) -> usize {
         return self.length;
