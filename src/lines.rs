@@ -5,14 +5,13 @@ use generational_arena::Index;
 pub struct LineArena {
     arena: Arena<Line>,
     head: Option<Index>,
-    cursor: Option<Index>,
     length: usize,
-    cursor_pos: usize
 }
 
 impl LineArena {
     pub fn new() -> LineArena {
-        LineArena{arena: Arena::new(), head: None, cursor: None, length: 0, cursor_pos: 0}
+        //LineArena{arena: Arena::new(), head: None, cursor: None, length: 0, cursor_pos: 0}
+        LineArena{arena: Arena::new(), head: None, length: 0}
     }
 
     pub fn add_empty_line(&mut self, idx: usize) -> Index{
@@ -37,6 +36,22 @@ impl LineArena {
             arena[line].nextline = head_index;
             self.head = Some(line);
         } else {
+            let mut pointer = self.head;
+            for _ in 0..(idx - 1) {
+                if let Some(ptr_index) = pointer {
+                    pointer = arena[ptr_index].nextline;
+                }
+            }
+            if let Some(ptr_index) = pointer {
+                arena[line].nextline = arena[ptr_index].nextline.take();
+                arena[ptr_index].nextline = Some(line);
+
+                if let Some(line_index) = arena[ptr_index].nextline {
+                    arena[line].prevline = arena[line_index].prevline.take();
+                    arena[line_index].prevline = Some(line_index);
+                }
+            }
+            /*
             // seek cursor to target index
             self.seek(idx);
             // reborrow self.arena (we used it once for self.seek)
@@ -53,6 +68,7 @@ impl LineArena {
                     arena[line_index].prevline = Some(line_index);
                 }
             }
+            */
         }
         self.length += 1;
         return line;
@@ -75,9 +91,46 @@ impl LineArena {
             panic!();
         }
 
-        self.seek(idx);
+        //self.seek(idx);
         let arena = &mut self.arena;
 
+        if idx == 0 {
+            if let Some(head) = self.head {
+                let next = arena[head].nextline.take();
+                self.head = next;
+                return Some(head);
+            } else {
+                return None;
+            }
+        } else {
+            let mut pointer = self.head;
+            for _ in 0..idx {
+                if let Some(ptr_index) = pointer {
+                    pointer = arena[ptr_index].nextline;
+                }
+            }
+            if let Some(ptr_index) = pointer {
+                let prevline = arena[ptr_index].prevline.take();
+                let nextline = arena[ptr_index].nextline.take();
+                match prevline {
+                    Some(prev_index) => {
+                        arena[prev_index].nextline = nextline;
+                    }
+                    None => {}
+                }
+                match nextline {
+                    Some(next_index) => {
+                        arena[next_index].prevline = prevline;
+                    },
+                    None => {}
+                }
+                return Some(ptr_index);
+            } else {
+                return None;
+            }
+        }
+
+        /*
         if let Some(cursor) = self.cursor {
             if let Some(prev) = arena[cursor].prevline {
                 arena[prev].nextline = arena[cursor].nextline;
@@ -104,16 +157,14 @@ impl LineArena {
         } else {
             None
         }
+        */
     }
 
     pub fn len(&self) -> usize {
         return self.length;
     }
 
-    pub fn cursor_loc(&self) -> usize {
-        return self.cursor_pos;
-    }
-
+    /*
     fn seek(&mut self, idx: usize) {
         // Moves cursor to index
 
@@ -153,6 +204,7 @@ impl LineArena {
             }
         }
     }
+    */
 }
 
 pub struct Line {
