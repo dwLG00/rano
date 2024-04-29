@@ -16,9 +16,14 @@ impl LineArena {
     pub fn add_empty_line(&mut self, idx: usize) -> Index{
         // Insert an empty line at index
 
-        let mut arena = &mut self.arena;
-
         let line = Line::new();
+        self.insert(line, idx)
+    }
+
+    pub fn insert(&self, line: Line, idx: usize) -> Index {
+        // Inserts line at given position
+
+        let arena = &mut self.arena;
         let line = arena.insert(line);
 
         if idx > self.length || idx < 0 {
@@ -52,7 +57,7 @@ impl LineArena {
             }
         }
         self.length += 1;
-        return line;
+        line
     }
 
     pub fn add_empty_line_head(&mut self) -> Index {
@@ -111,6 +116,7 @@ impl LineArena {
             }
         }
     }
+
 
     pub fn len(&self) -> usize {
         return self.length;

@@ -1,5 +1,4 @@
 - lines.rs
-    - Refactor to remove cursor
     - Add LineArena::insert() and LineArena::swap()
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
     - Add LineArena::get()
