@@ -157,6 +157,22 @@ impl LineArena {
     pub fn len(&self) -> usize {
         return self.length;
     }
+
+    pub fn export(&self) -> String {
+        let mut pointer = self.head;
+        let mut export = String::new();
+        while let Some(line) = pointer {
+            if self.arena[line].prevline != None {
+                // Only add newline for second iteration and beyond
+                export.push('\n');
+            }
+            for c in self.arena[line].content.iter() {
+                export.push(*c);
+            }
+            pointer = self.arena[line].nextline;
+        }
+        export
+    }
 }
 
 pub struct Line {
