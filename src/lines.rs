@@ -45,51 +45,92 @@ impl LineArena {
         LineArena{arena: arena, head: Some(head), length: length}
     }
 
-    pub fn add_empty_line(&mut self, idx: usize) -> Index{
-        // Insert an empty line at index
-
+    pub fn add_empty_line(&mut self, idx: usize) -> Index {
+        // Insert an empty line at absolute index
         let line = Line::new();
         self.insert(line, idx)
     }
 
+    pub fn add_empty_line_after(&mut self, index: Index) -> Index {
+        // Insert an empty line after index
+
+        let line = Line::new();
+        self.insert_after(line, index)
+    }
+
+    pub fn add_empty_line_before(&mut self, index: Index) -> Index {
+        // Insert an empty line before index
+        let line = Line::new();
+        self.insert_before(line, index)
+    }
+
     pub fn insert(&mut self, line: Line, idx: usize) -> Index {
-        // Inserts line at given position
+        // Inserts line at given absolute index
+        // e.g. [1, 2, 4].insert(3, 2) => [1, 2, 3, 4]
+
+        if idx > self.length || idx < 0 {
+            panic!();
+        }
+
+        let arena = &mut self.arena;
+
+        if idx == 0 {
+            self.insert_at_head(line)
+        } else {
+            let ptr_index = self.seek(idx - 1);
+            self.insert_after(line, ptr_index)
+        }
+    }
+
+    pub fn insert_after(&mut self, line: Line, index: Index) -> Index {
+        // Insert line after relative index
 
         let arena = &mut self.arena;
         let line = arena.insert(line);
 
-        if idx > self.length || idx < 0 {
-            // index out of range
-            panic!();
-        } else if idx == 0 {
-            // add line to head position
-            let head_index = self.head.take();
+        arena[line].nextline = arena[index].nextline.take();
+        arena[index].nextline = Some(line);
 
-            if let Some(index) = head_index {
-                // head actually exists -> set its prevline to new line
-                arena[index].prevline = Some(line);
-            }
-            arena[line].nextline = head_index;
-            self.head = Some(line);
-        } else {
-            let mut pointer = self.head;
-            for _ in 0..(idx - 1) {
-                if let Some(ptr_index) = pointer {
-                    pointer = arena[ptr_index].nextline;
-                }
-            }
-            if let Some(ptr_index) = pointer {
-                arena[line].nextline = arena[ptr_index].nextline.take();
-                arena[ptr_index].nextline = Some(line);
-
-                if let Some(line_index) = arena[ptr_index].nextline {
-                    arena[line].prevline = arena[line_index].prevline.take();
-                    arena[line_index].prevline = Some(line_index);
-                }
-            }
+        if let Some(line_index) = arena[index].nextline {
+            arena[line].prevline = arena[line_index].prevline.take();
+            arena[line_index].prevline = Some(line_index);
         }
         self.length += 1;
         line
+    }
+
+    pub fn insert_before(&mut self, line: Line, index: Index) -> Index {
+        // Insert line before relative index
+
+        let arena = &mut self.arena;
+        let prevline = arena[index].prevline;
+        match prevline {
+            Some(before) => self.insert_after(line, before),
+            None => self.insert_at_head(line) // index == self.head
+        }
+    }
+
+    pub fn insert_at_head(&mut self, line: Line) -> Index {
+        // Insert line at head
+
+        let arena = &mut self.arena;
+        let line = arena.insert(line);
+
+        // Set line.nextline and head.prevline
+        let head_index = self.head.take();
+        if let Some(index) = head_index {
+            // head actually exists -> set its prevline to new line
+            arena[index].prevline = Some(line);
+        }
+        arena[line].nextline = head_index;
+        self.head = Some(line);
+
+        self.length += 1;
+        line
+    }
+
+    pub fn append(&mut self, line: Line) -> Index {
+        self.insert(line, self.length)
     }
 
     pub fn add_empty_line_head(&mut self) -> Index {
@@ -99,7 +140,29 @@ impl LineArena {
 
     pub fn add_empty_line_tail(&mut self) -> Index {
         // Insert empty line at end
-        return self.add_empty_line(self.length - 1);
+        return self.add_empty_line(self.length);
+    }
+
+    pub fn seek(&mut self, idx: usize) -> Index {
+        // Retrieves index of line at idx
+
+        if idx < 0 || idx >= self.length {
+            panic!("idx out of range");
+        }
+
+        if idx == 0 {
+            return self.head.unwrap();
+        }
+
+        let arena = &mut self.arena;
+        let mut pointer = self.head;
+
+        for i in 0..(idx - 1) {
+            if let Some(ptr_index) = pointer {
+                pointer = arena[ptr_index].nextline;
+            }
+        }
+        pointer.unwrap()
     }
 
     pub fn get(&mut self, idx: usize) -> Option<&Line> {
@@ -120,51 +183,42 @@ impl LineArena {
         }
     }
 
+    pub fn pop_index(&mut self, index: Index) {
+        // Pops the line at relative index
+
+        let arena = &mut self.arena;
+
+        let prevline = arena[index].prevline.take();
+        let nextline = arena[index].nextline.take();
+        match prevline {
+            Some(prev_index) => {
+                arena[prev_index].nextline = nextline;
+            }
+            None => {}
+        }
+        match nextline {
+            Some(next_index) => {
+                arena[next_index].prevline = prevline;
+            },
+            None => {}
+        }
+        self.length -= 1;
+    }
+
     pub fn pop(&mut self, idx: usize) -> Option<Index> {
         // Pops the line at index
+
+        if idx == self.length && idx == 0 {
+            return None;
+        }
 
         if idx < 0 || idx >= self.length {
             panic!();
         }
 
-        //self.seek(idx);
-        let arena = &mut self.arena;
-
-        if idx == 0 {
-            if let Some(head) = self.head {
-                let next = arena[head].nextline.take();
-                self.head = next;
-                return Some(head);
-            } else {
-                return None;
-            }
-        } else {
-            let mut pointer = self.head;
-            for _ in 0..idx {
-                if let Some(ptr_index) = pointer {
-                    pointer = arena[ptr_index].nextline;
-                }
-            }
-            if let Some(ptr_index) = pointer {
-                let prevline = arena[ptr_index].prevline.take();
-                let nextline = arena[ptr_index].nextline.take();
-                match prevline {
-                    Some(prev_index) => {
-                        arena[prev_index].nextline = nextline;
-                    }
-                    None => {}
-                }
-                match nextline {
-                    Some(next_index) => {
-                        arena[next_index].prevline = prevline;
-                    },
-                    None => {}
-                }
-                return Some(ptr_index);
-            } else {
-                return None;
-            }
-        }
+        let index = self.seek(idx);
+        self.pop_index(index);
+        Some(index)
     }
 
     pub fn swap(&mut self, index1: Index, index2: Index) {
@@ -204,14 +258,52 @@ impl LineArena {
         }
     }
 
+    pub fn split(&mut self, index: Index, split_point: usize) {
+        // Splits line into [..split_point] and [split_point..]
+        // Mutates this Line into [..split_point], and returns Line
+        // with [split_point..]
+
+        let arena = &mut self.arena;
+        let line_length = arena[index].len();
+
+        if split_point < 0 || split_point > line_length {
+            panic!("split_point index out of range");
+        }
+
+        if split_point == 0 {
+            // Hit enter at beginning -> newline behind
+            self.add_empty_line_before(index);
+        } else if split_point == line_length {
+            // Hit enter at end -> newline in front
+            self.add_empty_line_after(index);
+        } else {
+            // Split off the extra, create new Line, insert after
+            let split_off = arena[index].content.split_off(split_point);
+            let line = Line::new_from(split_off);
+            self.insert_after(line, index);
+        }
+    }
+
     pub fn len(&self) -> usize {
         return self.length;
     }
 
     pub fn display_frame(&mut self, width: usize, height: usize) -> Vec<Vec<char>> {
-        // Returns a vector of <= `height` char slices, each <= `width` wide
-        let mut pointer = self.head;
+        // Returns a vector of <= `height` Vec<char>s, each <= `width` wide
+        // starting from head
+
+        match self.head {
+            Some(head) => self.display_frame_from(head, width, height),
+            None => Vec::<Vec<char>>::new() // empty
+        }
+    }
+
+    pub fn display_frame_from(&mut self, index: Index, width: usize, height: usize) -> Vec<Vec<char>> {
+        // Returns a vector of <= `height` Vec<char>s, each <= `width wide
+        // counted from `index` to end
+
         let mut buffer = Vec::<Vec<char>>::new();
+        let mut pointer = Some(index);
 
         while buffer.len() < height {
             match pointer {
@@ -270,6 +362,11 @@ impl Line {
     pub fn height(&self, width: usize) -> usize {
         // Get the height of line if displayed
         1 + self.content.len() / width
+    }
+
+    pub fn len(&self) -> usize {
+        // Get length of self.content
+        self.content.len()
     }
 
     pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {
