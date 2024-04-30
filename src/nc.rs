@@ -26,18 +26,23 @@ pub struct Editor {
 
 impl Editor {
     pub fn new() -> Editor {
-        Editor::from_line_arena(lines::LineArena::new())
+        // Blank editor instance
+
+        let (_, width) = get_window_dimensions();
+        Editor::from_line_arena(lines::LineArena::new(width))
     }
 
     pub fn from_file(file: fs::File) -> Editor {
-        Editor::from_line_arena(lines::LineArena::from_file(file))
+        // New Editor instance from a file
+
+        let (_, width) = get_window_dimensions();
+        Editor::from_line_arena(lines::LineArena::from_file(file, width))
     }
 
     pub fn from_line_arena(line_arena: lines::LineArena) -> Editor {
-        let mut width = 0;
-        let mut height = 0;
-        getmaxyx(stdscr(), &mut height, &mut width);
+        // New Editor instance from LineArena
 
+        let size = get_window_dimensions();
         let head = line_arena.get_head().clone();
 
         Editor {
@@ -45,7 +50,7 @@ impl Editor {
             cursor_text: (head, 0),
             cursor_display: (0, 0),
             cursor_frame: (head, 0),
-            size: (height as usize, width as usize)
+            size: size
         }
     }
 
@@ -95,4 +100,13 @@ impl Editor {
     pub fn scroll_down(&mut self, display_after: bool) {
         // Scroll the text cursor down, and modify other cursors as appropriate
     }
+}
+
+fn get_window_dimensions() -> WindowYX {
+    // Return dimensions of terminal window (height, width)
+    let mut width = 0;
+    let mut height = 0;
+    getmaxyx(stdscr(), &mut height, &mut width);
+
+    (height as usize, width as usize)
 }

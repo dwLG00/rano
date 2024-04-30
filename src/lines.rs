@@ -8,15 +8,23 @@ use std::cmp::{min, max};
 pub struct LineArena {
     arena: Arena<Line>,
     head: Option<Index>,
-    length: usize
+    length: usize,
+    width: usize,
+    line_count: usize
 }
 
 impl LineArena {
-    pub fn new() -> LineArena {
-        LineArena{arena: Arena::new(), head: None, length: 0}
+    pub fn new(width: usize) -> LineArena {
+        LineArena {
+            arena: Arena::new(),
+            head: None,
+            length: 0,
+            width: width,
+            line_count: 0
+        }
     }
 
-    pub fn from_file(mut file: fs::File) -> LineArena {
+    pub fn from_file(mut file: fs::File, width: usize) -> LineArena {
         // Constructor data
         let mut arena = Arena::<Line>::new();
         let head = Line::new();
@@ -42,7 +50,15 @@ impl LineArena {
                 arena[pointer].push_char(ch);
             }
         }
-        LineArena{arena: arena, head: Some(head), length: length}
+        let line_arena = LineArena {
+            arena: arena,
+            head: Some(head),
+            length: length,
+            width: width,
+            line_count: 0 // Temporary value; update later
+        };
+        line_arena.get_line_count();
+        line_arena
     }
 
     pub fn add_empty_line(&mut self, idx: usize) -> Index {
@@ -327,6 +343,7 @@ impl LineArena {
     }
 
     pub fn export(&self) -> String {
+        // Return a string formed from merging Lines
         let mut pointer = self.head;
         let mut export = String::new();
         while let Some(line) = pointer {
@@ -340,6 +357,25 @@ impl LineArena {
             pointer = self.arena[line].nextline;
         }
         export
+    }
+
+    fn get_line_count(&self) -> usize {
+        // Count number of display lines (a Line can span multiple display lines)
+
+        let mut line_count: usize = 0;
+
+        let mut pointer = self.head;
+        while let Some(ptr_index) = pointer {
+            line_count += self.arena[ptr_index].height(self.width);
+            pointer = self.arena[ptr_index].nextline;
+        }
+        line_count
+    }
+
+    fn update_line_count(&mut self) {
+        // Update line_count
+
+        self.line_count = self.get_line_count();
     }
 }
 
