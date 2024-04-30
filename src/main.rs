@@ -6,6 +6,7 @@ use std::io::Read;
 use std::fs;
 use std::path::Path;
 mod lines;
+mod nc;
 
 fn open_file() -> lines::LineArena {
     let args: Vec<_> = env::args().collect();

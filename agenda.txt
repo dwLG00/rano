@@ -6,3 +6,4 @@
     - Move ncurses displaying stuff from main.rs to nc.rs
     - Add arrow movement for moving screens
     - Add cursor
+    - Add text insertion
