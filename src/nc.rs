@@ -38,11 +38,13 @@ impl Editor {
         let mut height = 0;
         getmaxyx(stdscr(), &mut height, &mut width);
 
+        let head = line_arena.get_head().clone();
+
         Editor {
             line_arena: line_arena,
-            cursor_text: (None, 0),
+            cursor_text: (head, 0),
             cursor_display: (0, 0),
-            cursor_frame: (None, 0),
+            cursor_frame: (head, 0),
             size: (height as usize, width as usize)
         }
     }

@@ -8,7 +8,7 @@ use std::path::Path;
 mod lines;
 mod nc;
 
-fn open_file() -> lines::LineArena {
+fn open_file() -> nc::Editor {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
         panic!("Requires filepath argument");
@@ -16,16 +16,19 @@ fn open_file() -> lines::LineArena {
 
     let reader = fs::File::open(Path::new(&args[1]));
     let mut file = reader.ok().expect("Unable to open file");
-    lines::LineArena::from_file(file)
+    nc::Editor::from_file(file)
 }
 
 fn main() {
-    let mut line_arena = open_file();
+    let mut editor = open_file();
     initscr();
     raw();
-    keypad(ncurses::stdscr(), true);
+    keypad(stdscr(), true);
     noecho();
 
+    editor.display_at_cursor();
+
+    /*
     let mut max_x = 0;
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
@@ -40,6 +43,7 @@ fn main() {
         getyx(stdscr(), &mut cur_y, &mut cur_x);
         mv(cur_y + 1, 0);
     }
+    */
 
     refresh();
     getch();

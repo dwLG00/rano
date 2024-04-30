@@ -285,7 +285,11 @@ impl LineArena {
     }
 
     pub fn len(&self) -> usize {
-        return self.length;
+        self.length
+    }
+
+    pub fn get_head(&self) -> Option<Index> {
+        self.head
     }
 
     pub fn display_frame(&mut self, width: usize, height: usize) -> Vec<Vec<char>> {
