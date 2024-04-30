@@ -269,7 +269,7 @@ impl Line {
 
     pub fn height(&self, width: usize) -> usize {
         // Get the height of line if displayed
-        self.content.len() / width
+        1 + self.content.len() / width
     }
 
     pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {
@@ -303,7 +303,7 @@ impl Line {
         let height = self.height(width);
 
         if height < n || n == 0 {
-            panic!();
+            panic!("{}", format!("n lines out of bounds (height: {}, n: {})", height, n));
         }
 
         if height == 1 {

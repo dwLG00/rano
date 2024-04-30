@@ -19,7 +19,7 @@ fn open_file() -> lines::LineArena {
 }
 
 fn main() {
-    let line_arena = open_file();
+    let mut line_arena = open_file();
     initscr();
     raw();
     keypad(ncurses::stdscr(), true);
@@ -28,6 +28,20 @@ fn main() {
     let mut max_x = 0;
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
+
+    let buffer = line_arena.display_frame(max_x as usize, max_y as usize);
+    for line in buffer.iter() {
+        for ch in line.iter() {
+            addch(*ch as chtype);
+        }
+        let mut cur_x = 0;
+        let mut cur_y = 0;
+        getyx(stdscr(), &mut cur_y, &mut cur_x);
+        mv(cur_y + 1, 0);
+    }
+
+    refresh();
+    getch();
 
     /*
     addstr("Enter a character: ").unwrap();
