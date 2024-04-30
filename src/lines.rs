@@ -3,6 +3,7 @@ use generational_arena::Arena;
 use generational_arena::Index;
 use std::fs;
 use std::io::Read;
+use std::cmp::{min, max};
 
 pub struct LineArena {
     arena: Arena<Line>,
@@ -207,6 +208,28 @@ impl LineArena {
         return self.length;
     }
 
+    pub fn display_frame(&mut self, width: usize, height: usize) -> Vec<&[char]> {
+        // Returns a vector of <= `height` char slices, each <= `width` wide
+        let mut pointer = self.head;
+        let mut buffer = Vec::<&[char]>::new();
+
+        while buffer.len() < height {
+            match pointer {
+                Some(ptr_index) => {
+                    let diff = height - buffer.len();
+                    let mut line = &mut self.arena[ptr_index];
+                    let n_lines = min(diff, line.height(width));
+                    let mut slices = line.get_n_lines(width, n_lines);
+                    buffer.append(&mut slices);
+                    pointer = line.nextline;
+                }, None => {
+                    break;
+                }
+            }
+        }
+        buffer
+    }
+
     pub fn export(&self) -> String {
         let mut pointer = self.head;
         let mut export = String::new();
@@ -240,6 +263,61 @@ impl Line {
     }
 
     pub fn push_char(&mut self, character: char) {
-        self.content.push(character)
+        // Push a char to the contents of line
+        self.content.push(character);
+    }
+
+    pub fn height(&self, width: usize) -> usize {
+        // Get the height of line if displayed
+        self.content.len() / width
+    }
+
+    pub fn get_lines(&mut self, width: usize) -> Vec<&[char]> {
+        // Returns a vector of slices, each corresponding to a line
+        let mut slices = Vec::<&[char]>::new();
+        let height = self.height(width);
+
+        // Edge case
+        if height == 1 {
+            slices.push(&self.content[..]);
+            return slices;
+        }
+
+        // All full-length slices
+        for i in 0..(height - 2) {
+            let begin = i * width;
+            let end = begin + width;
+            slices.push(&self.content[begin..end]);
+        }
+
+        // Tail slice
+        let tail_begin = (height - 1) * width;
+        slices.push(&self.content[tail_begin..]);
+
+        slices
+    }
+
+    pub fn get_n_lines(&mut self, width: usize, n: usize) -> Vec<&[char]> {
+        // Returns a vector of n lines
+        let mut slices = Vec::<&[char]>::new();
+        let height = self.height(width);
+        if height < n || n == 0 {
+            panic!();
+        }
+
+        if height == 1 {
+            slices.push(&self.content[..]);
+            return slices;
+        }
+
+        for i in 0..(n - 2) {
+            let begin = i * width;
+            let end = begin + width;
+            slices.push(&self.content[begin..end]);
+        }
+
+        let tail_begin = (n - 1) * width;
+        slices.push(&self.content[tail_begin..]);
+        slices
     }
 }

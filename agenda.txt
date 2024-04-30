@@ -1,6 +1,5 @@
 - lines.rs
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
-    - Add LineArena::get()
 
 - Work on basic editor functionality
     - Display LineArena text
