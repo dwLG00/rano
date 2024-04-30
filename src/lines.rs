@@ -15,20 +15,22 @@ impl LineArena {
         LineArena{arena: Arena::new(), head: None, length: 0}
     }
 
-    pub fn from_file(file: fs::File) -> LineArena {
+    pub fn from_file(mut file: fs::File) -> LineArena {
+        // Constructor data
         let mut arena = Arena::<Line>::new();
         let head = Line::new();
         let head = arena.insert(head);
         let mut pointer = head;
-
         let mut length = 1;
 
-        for ch in file.bytes() {
-            if ch.is_err() {
-                break;
-            }
-            let ch = ch.unwrap();
-            if ch == b'\n' {
+        // Read file all into a buffer
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer);
+
+        // Iterate over each character
+        for ch in buffer.chars() {
+            // Newline -> add new Line to end of list
+            if ch == '\n' {
                 let new_line = Line::new();
                 let new_line = arena.insert(new_line);
                 arena[new_line].prevline = Some(pointer);
@@ -36,7 +38,7 @@ impl LineArena {
                 pointer = new_line;
                 length += 1;
             } else {
-                arena[pointer].push_char(ch as char);
+                arena[pointer].push_char(ch);
             }
         }
         LineArena{arena: arena, head: Some(head), length: length}
