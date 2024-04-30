@@ -1,6 +1,8 @@
 extern crate generational_arena;
 use generational_arena::Arena;
 use generational_arena::Index;
+use std::fs;
+use std::io::Read;
 
 pub struct LineArena {
     arena: Arena<Line>,
@@ -11,6 +13,33 @@ pub struct LineArena {
 impl LineArena {
     pub fn new() -> LineArena {
         LineArena{arena: Arena::new(), head: None, length: 0}
+    }
+
+    pub fn from_file(file: fs::File) -> LineArena {
+        let mut arena = Arena::<Line>::new();
+        let head = Line::new();
+        let head = arena.insert(head);
+        let mut pointer = head;
+
+        let mut length = 1;
+
+        for ch in file.bytes() {
+            if ch.is_err() {
+                break;
+            }
+            let ch = ch.unwrap();
+            if ch == b'\n' {
+                let new_line = Line::new();
+                let new_line = arena.insert(new_line);
+                arena[new_line].prevline = Some(pointer);
+                arena[pointer].nextline = Some(new_line);
+                pointer = new_line;
+                length += 1;
+            } else {
+                arena[pointer].push_char(ch as char);
+            }
+        }
+        LineArena{arena: arena, head: Some(head), length: length}
     }
 
     pub fn add_empty_line(&mut self, idx: usize) -> Index{
@@ -68,6 +97,24 @@ impl LineArena {
     pub fn add_empty_line_tail(&mut self) -> Index {
         // Insert empty line at end
         return self.add_empty_line(self.length - 1);
+    }
+
+    pub fn get(&mut self, idx: usize) -> Option<&Line> {
+        // Get reference to line at index
+        if idx < 0 || idx >= self.length {
+            panic!();
+        }
+
+        let mut pointer = self.head;
+        for _ in 0..idx {
+            if let Some(ptr_index) = pointer {
+                pointer = self.arena[ptr_index].nextline;
+            }
+        }
+        match pointer {
+            Some(ptr_index) => Some(&self.arena[ptr_index]),
+            None => None
+        }
     }
 
     pub fn pop(&mut self, idx: usize) -> Option<Index> {
@@ -188,5 +235,9 @@ impl Line {
 
     pub fn new_from(content: Vec<char>) -> Line {
         Line { prevline: None, nextline: None, content: content }
+    }
+
+    pub fn push_char(&mut self, character: char) {
+        self.content.push(character)
     }
 }
