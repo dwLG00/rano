@@ -104,6 +104,7 @@ impl LineArena {
         let arena = &mut self.arena;
         let line = arena.insert(line);
 
+        // Set links
         arena[line].nextline = arena[index].nextline.take();
         arena[index].nextline = Some(line);
 
@@ -111,7 +112,11 @@ impl LineArena {
             arena[line].prevline = arena[line_index].prevline.take();
             arena[line_index].prevline = Some(line_index);
         }
+
+        // Update line_count and length
+        self.line_count += arena[line].height(self.width);
         self.length += 1;
+
         line
     }
 
@@ -141,7 +146,10 @@ impl LineArena {
         arena[line].nextline = head_index;
         self.head = Some(line);
 
+        // Update length and line_count
         self.length += 1;
+        self.line_count += arena[line].height(self.width);
+
         line
     }
 
@@ -204,6 +212,7 @@ impl LineArena {
 
         let arena = &mut self.arena;
 
+        // Unlink Line at index
         let prevline = arena[index].prevline.take();
         let nextline = arena[index].nextline.take();
         match prevline {
@@ -218,7 +227,10 @@ impl LineArena {
             },
             None => {}
         }
+
+        // Update length and line_count
         self.length -= 1;
+        self.line_count -= arena[index].height(self.width);
     }
 
     pub fn pop(&mut self, idx: usize) -> Option<Index> {
@@ -294,8 +306,12 @@ impl LineArena {
             self.add_empty_line_after(index);
         } else {
             // Split off the extra, create new Line, insert after
+            let current_height = arena[index].height(self.width);
             let split_off = arena[index].content.split_off(split_point);
+            let new_height = arena[index].height(self.width);
             let line = Line::new_from(split_off);
+            // Update line_count so that the adjusted line_count after insert_after() is correct
+            self.line_count -= (current_height - new_height); // Guarantees (current - new) >= 0
             self.insert_after(line, index);
         }
     }
