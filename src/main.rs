@@ -26,7 +26,21 @@ fn main() {
     keypad(stdscr(), true);
     noecho();
 
-    editor.display_at_cursor();
+    let mut ch = getch();
+    while ch != KEY_F(1) {
+        clear();
+        editor.display_at_frame_cursor();
+        editor.move_cursor_to();
+        refresh();
+
+        match ch {
+            KEY_DOWN => {
+                editor.scroll_down(false);
+            },
+            _ => {}
+        }
+        ch = getch();
+    }
 
     /*
     let mut max_x = 0;
@@ -44,9 +58,6 @@ fn main() {
         mv(cur_y + 1, 0);
     }
     */
-
-    refresh();
-    getch();
 
     /*
     addstr("Enter a character: ").unwrap();

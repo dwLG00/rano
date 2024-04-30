@@ -8,6 +8,7 @@ use std::env;
 use std::io::Read;
 use std::fs;
 use std::path::Path;
+use std::cmp::{min, max};
 use crate::lines;
 
 type TextCursor = (Option<Index>, usize);
@@ -84,7 +85,7 @@ impl Editor {
         }
     }
 
-    pub fn display_at_cursor(&mut self) {
+    pub fn display_at_frame_cursor(&mut self) {
         // Display the file, starting at frame cursor
 
         let (height, width) = self.size;
@@ -97,8 +98,60 @@ impl Editor {
         }
     }
 
+    pub fn move_cursor_to(&mut self) {
+        // Move cursor to cursor_display
+
+        let (cur_y, cur_x) = self.cursor_display;
+        mv(cur_y as i32, cur_x as i32);
+    }
+
     pub fn scroll_down(&mut self, display_after: bool) {
         // Scroll the text cursor down, and modify other cursors as appropriate
+
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        let mut jumped_line = false;
+
+        // Update cursor_text
+        if let Some(line_index) = maybe_text_line_index {
+            if line_pos + width >= self.line_arena.get(line_index).len() {
+                // We've jumped to the next Line
+                match self.line_arena.get(line_index).nextline {
+                    Some(next_index) => {
+                        self.cursor_text = (Some(next_index), min(self.line_arena.get(next_index).len(), cur_x));
+                    },
+                    None => {
+                        // We've reached the end of the text => don't change anything
+                        return
+                    }
+                }
+            } else {
+                self.cursor_text = (maybe_text_line_index, line_pos + width);
+            }
+        }
+
+        // Update cursor_display and cursor_frame
+        if cur_y + 1 == height {
+            // Can't scroll past
+            if let Some(frame_line_index) = maybe_frame_line_index {
+                if line_height + 1 == self.line_arena.get(frame_line_index).height(width) {
+                    // Move to the next line
+                    self.cursor_frame = (self.line_arena.get(frame_line_index).nextline, 0);
+                } else {
+                    self.cursor_frame = (maybe_frame_line_index, line_height + 1);
+                }
+            }
+            // cursor_display stays the same
+        } else {
+            self.cursor_display = (cur_y + 1, cur_x);
+        }
+
+        if display_after {
+            self.display_at_frame_cursor();
+        }
     }
 }
 

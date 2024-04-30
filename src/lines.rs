@@ -189,8 +189,15 @@ impl LineArena {
         pointer.unwrap()
     }
 
-    pub fn get(&mut self, idx: usize) -> Option<&Line> {
+    pub fn get(&mut self, index: Index) -> &Line {
+        // Get reference to Line with Index
+
+        &self.arena[index]
+    }
+
+    pub fn get_idx(&mut self, idx: usize) -> Option<&Line> {
         // Get reference to line at index
+
         if idx < 0 || idx >= self.length {
             panic!();
         }
@@ -396,8 +403,8 @@ impl LineArena {
 }
 
 pub struct Line {
-    prevline: Option<Index>,
-    nextline: Option<Index>,
+    pub prevline: Option<Index>,
+    pub nextline: Option<Index>,
     content: Vec<char>
 }
 
