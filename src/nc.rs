@@ -11,21 +11,35 @@ use std::path::Path;
 use crate::lines;
 
 type TextCursor = (Option<Index>, usize);
-type DisplayCursor = (usize, usize);
+type FrameCursor = (Option<Index>, usize);
+type WindowYX = (usize, usize);
 type Buffer = Vec<Vec<char>>;
+type BufferSlice<'a> = &'a [Vec<char>];
 
 pub struct Editor {
     line_arena: lines::LineArena,
     cursor_text: TextCursor,
-    cursor_display: DisplayCursor
+    cursor_display: WindowYX,
+    cursor_frame: FrameCursor,
+    size: WindowYX
 }
 
 impl Editor {
     pub fn new() -> Editor {
-        Editor{ line_arena: lines::LineArena::new(), cursor_text: (None, 0), cursor_display: (0, 0)}
+        let mut width = 0;
+        let mut height = 0;
+        getmaxyx(stdscr(), &mut height, &mut width);
+
+        Editor {
+            line_arena: lines::LineArena::new(), 
+            cursor_text: (None, 0),
+            cursor_display: (0, 0),
+            cursor_frame: (None, 0),
+            size: (height as usize, width as usize)
+        }
     }
 
-    pub fn display(buffer: Buffer, width: usize, height: usize, start_at_beginning: bool, move_back: bool) {
+    pub fn display(buffer_slice: BufferSlice, start_at_beginning: bool, move_back: bool) {
         // Displays the contents of a Vec<Vec<char>>
 
         // Store the beginning ncurses cursor location in case move_back == true
@@ -39,7 +53,7 @@ impl Editor {
         }
 
         // Display each line
-        for line in buffer.iter() {
+        for line in buffer_slice.iter() {
             for ch in line.iter() {
                 addch(*ch as chtype);
             }
@@ -52,6 +66,19 @@ impl Editor {
 
         if move_back {
             mv(start_x, start_y);
+        }
+    }
+
+    pub fn display_at_cursor(&mut self) {
+        // Display the file, starting at frame cursor
+
+        let (height, width) = self.size;
+        let (maybe_index, line_height) = self.cursor_frame;
+        if let Some(index) = maybe_index {
+            let buffer = self.line_arena.display_frame_from(index, width, height + line_height);
+            if buffer.len() > line_height {
+                Editor::display(&buffer[line_height..], false, false);
+            }
         }
     }
 }
