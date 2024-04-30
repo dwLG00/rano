@@ -208,10 +208,10 @@ impl LineArena {
         return self.length;
     }
 
-    pub fn display_frame(&mut self, width: usize, height: usize) -> Vec<&[char]> {
+    pub fn display_frame(&mut self, width: usize, height: usize) -> Vec<Vec<char>> {
         // Returns a vector of <= `height` char slices, each <= `width` wide
         let mut pointer = self.head;
-        let mut buffer = Vec::<&[char]>::new();
+        let mut buffer = Vec::<Vec<char>>::new();
 
         while buffer.len() < height {
             match pointer {
@@ -272,14 +272,14 @@ impl Line {
         self.content.len() / width
     }
 
-    pub fn get_lines(&mut self, width: usize) -> Vec<&[char]> {
-        // Returns a vector of slices, each corresponding to a line
-        let mut slices = Vec::<&[char]>::new();
+    pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {
+        // Returns a vector of vectors of slices, each corresponding to a line
+        let mut slices = Vec::<Vec<char>>::new();
         let height = self.height(width);
 
         // Edge case
         if height == 1 {
-            slices.push(&self.content[..]);
+            slices.push(self.content.clone());
             return slices;
         }
 
@@ -287,37 +287,38 @@ impl Line {
         for i in 0..(height - 2) {
             let begin = i * width;
             let end = begin + width;
-            slices.push(&self.content[begin..end]);
+            slices.push(self.content[begin..end].to_vec());
         }
 
         // Tail slice
         let tail_begin = (height - 1) * width;
-        slices.push(&self.content[tail_begin..]);
+        slices.push(self.content[tail_begin..].to_vec());
 
         slices
     }
 
-    pub fn get_n_lines(&mut self, width: usize, n: usize) -> Vec<&[char]> {
+    pub fn get_n_lines(&mut self, width: usize, n: usize) -> Vec<Vec<char>> {
         // Returns a vector of n lines
-        let mut slices = Vec::<&[char]>::new();
+        let mut slices = Vec::<Vec<char>>::new();
         let height = self.height(width);
+
         if height < n || n == 0 {
             panic!();
         }
 
         if height == 1 {
-            slices.push(&self.content[..]);
+            slices.push(self.content[..].to_vec());
             return slices;
         }
 
         for i in 0..(n - 2) {
             let begin = i * width;
             let end = begin + width;
-            slices.push(&self.content[begin..end]);
+            slices.push(self.content[begin..end].to_vec());
         }
 
         let tail_begin = (n - 1) * width;
-        slices.push(&self.content[tail_begin..]);
+        slices.push(self.content[tail_begin..].to_vec());
         slices
     }
 }
