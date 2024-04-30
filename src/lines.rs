@@ -8,7 +8,7 @@ use std::cmp::{min, max};
 pub struct LineArena {
     arena: Arena<Line>,
     head: Option<Index>,
-    length: usize,
+    length: usize
 }
 
 impl LineArena {

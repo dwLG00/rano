@@ -26,12 +26,20 @@ pub struct Editor {
 
 impl Editor {
     pub fn new() -> Editor {
+        Editor::from_line_arena(lines::LineArena::new())
+    }
+
+    pub fn from_file(file: fs::File) -> Editor {
+        Editor::from_line_arena(lines::LineArena::from_file(file))
+    }
+
+    pub fn from_line_arena(line_arena: lines::LineArena) -> Editor {
         let mut width = 0;
         let mut height = 0;
         getmaxyx(stdscr(), &mut height, &mut width);
 
         Editor {
-            line_arena: lines::LineArena::new(), 
+            line_arena: line_arena,
             cursor_text: (None, 0),
             cursor_display: (0, 0),
             cursor_frame: (None, 0),
@@ -80,5 +88,9 @@ impl Editor {
                 Editor::display(&buffer[line_height..], false, false);
             }
         }
+    }
+
+    pub fn scroll_down(&mut self, display_after: bool) {
+        // Scroll the text cursor down, and modify other cursors as appropriate
     }
 }
