@@ -4,5 +4,6 @@
 - Work on basic editor functionality
     - Add text insertion
     - Add enter
+    - Add smart cursor pos (when hitting down repeatedly, cursor should "remember" its rough x coordinate)
 
 - Bug fix
