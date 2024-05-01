@@ -9,5 +9,4 @@
     - Add text insertion
 
 - Bug fix
-    - Fix bug where multiple-line wrapped text doesn't display properly (only tail is displayed)
-        - display cursor looks fine
+    - Fix bug where pressing down when cursor is at bottom sometimes causes cursor to "overflow"

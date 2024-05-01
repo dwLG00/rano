@@ -79,7 +79,13 @@ impl Editor {
             let mut cur_x = 0;
             let mut cur_y = 0;
             getyx(window, &mut cur_y, &mut cur_x);
-            mv(cur_y + 1, 0);
+
+            if cur_x == 0 && line.len() > 0 {
+                // If cur_x ends up being 0 after printing a lot on screen, then
+                // it means the cursor wrapped around, so cur_y already got incremented
+            } else {
+                mv(cur_y + 1, 0);
+            }
         }
 
         if move_back {

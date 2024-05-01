@@ -444,7 +444,7 @@ impl Line {
         }
 
         // All full-length slices
-        for i in 0..(height - 2) {
+        for i in 0..(height - 1) {
             let begin = i * width;
             let end = begin + width;
             slices.push(self.content[begin..end].to_vec());
@@ -476,7 +476,7 @@ impl Line {
             return slices;
         }
 
-        for i in 0..(n - 2) {
+        for i in 0..(n - 1) {
             let begin = i * width;
             let end = begin + width;
             slices.push(self.content[begin..end].to_vec());
