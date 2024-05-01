@@ -243,7 +243,7 @@ impl Editor {
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
-            if line_pos + 1 >= self.line_arena.get(line_index).len() {
+            if line_pos + 1 > self.line_arena.get(line_index).len() {
                 // We've jumped to the next Line
                 match self.line_arena.get(line_index).nextline {
                     Some(next_index) => {
@@ -305,6 +305,7 @@ impl Editor {
                         let prev_len = self.line_arena.get(prev_index).len();
                         let tail_len = self.line_arena.get(prev_index).tail_len(width);
                         next_display_cursor = tail_len; // This is where the display cursor cur_x will be set to
+
                         self.cursor_text = (Some(prev_index), prev_len);
                     },
                     None => {
