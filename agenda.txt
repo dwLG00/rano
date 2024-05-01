@@ -2,8 +2,10 @@
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
 
 - Work on basic editor functionality
-    - Add text insertion
-    - Add enter
+    - Add text 
     - Add smart cursor pos (when hitting down repeatedly, cursor should "remember" its rough x coordinate)
+    - Add 
 
 - Bug fix
+    - Fix blinking on keypress that happens sometimes
+    - Hitting enter doesn't move the cursor position (needs special code to create an empty line after)
