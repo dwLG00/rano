@@ -227,7 +227,7 @@ impl Editor {
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
-            if line_pos + 1 == self.line_arena.get(line_index).len() {
+            if line_pos + 1 >= self.line_arena.get(line_index).len() {
                 // We've jumped to the next Line
                 match self.line_arena.get(line_index).nextline {
                     Some(next_index) => {
