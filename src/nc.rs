@@ -162,8 +162,6 @@ impl Editor {
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
-        //panic!("break1");
-
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
             if line_pos < width {
@@ -188,8 +186,6 @@ impl Editor {
                 self.cursor_text = (maybe_text_line_index, line_pos - width);
             }
         }
-
-        //panic!("break2");
 
         // Update cursor_display and cursor_frame
         if cur_y == 0 {
@@ -219,6 +215,59 @@ impl Editor {
         }
     }
 
+    pub fn scroll_right(&mut self, display_after: bool) {
+        // Scroll the text cursor right, and modify other cursors as appropriate
+
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        let mut next_line_flag = false;
+
+        // Update cursor_text
+        if let Some(line_index) = maybe_text_line_index {
+            if line_pos + 1 == self.line_arena.get(line_index).len() {
+                // We've jumped to the next Line
+                match self.line_arena.get(line_index).nextline {
+                    Some(next_index) => {
+                        self.cursor_text = (Some(next_index), 0);
+                    },
+                    None => {
+                        // We've reached the end of the text => don't change anything
+                        return
+                    }
+                }
+                next_line_flag = true;
+            } else {
+                self.cursor_text = (maybe_text_line_index, line_pos + 1);
+            }
+        }
+
+        // Update cursor_display and cursor_frame
+        if cur_x + 1 == width && cur_y + 1 == height {
+            // Can't scroll past
+            if let Some(frame_line_index) = maybe_frame_line_index {
+                if line_height + 1 == self.line_arena.get(frame_line_index).height(width) {
+                    // Move to the next line
+                    self.cursor_frame = (self.line_arena.get(frame_line_index).nextline, 0);
+                } else {
+                    self.cursor_frame = (maybe_frame_line_index, line_height + 1);
+                }
+                self.cursor_display = (cur_y, 0);
+            }
+        } else {
+            if cur_x + 1 == width || next_line_flag {
+                self.cursor_display = (cur_y + 1, 0);
+            } else {
+                self.cursor_display = (cur_y, cur_x + 1);
+            }
+        }
+
+        if display_after {
+            self.display_at_frame_cursor();
+        }
+    }
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
