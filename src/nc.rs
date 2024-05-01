@@ -153,6 +153,72 @@ impl Editor {
             self.display_at_frame_cursor();
         }
     }
+
+    pub fn scroll_up(&mut self, display_after: bool) {
+        // Scroll the text cursor up, and modify other cursors as appropriate
+
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        //panic!("break1");
+
+        // Update cursor_text
+        if let Some(line_index) = maybe_text_line_index {
+            if line_pos < width {
+                // We've jumped to the previous Line
+                match self.line_arena.get(line_index).prevline {
+                    Some(prev_index) => {
+                        // Check if the tail of the previous line is less than cur_x
+                        let prev_len = self.line_arena.get(prev_index).len();
+                        let tail_length = prev_len - (prev_len / width) * width; // Mod width
+                        if tail_length < cur_x {
+                            self.cursor_text = (Some(prev_index), prev_len);
+                        } else {
+                            self.cursor_text = (Some(prev_index), (prev_len / width) * width + cur_x);
+                        }
+                    },
+                    None => {
+                        // We've reached the end of the text => don't change anything
+                        return
+                    }
+                }
+            } else {
+                self.cursor_text = (maybe_text_line_index, line_pos - width);
+            }
+        }
+
+        //panic!("break2");
+
+        // Update cursor_display and cursor_frame
+        if cur_y == 0 {
+            // Can't scroll past
+            if let Some(frame_line_index) = maybe_frame_line_index {
+                if line_height == 0 {
+                    // Move to the previous line
+                    let prevline = self.line_arena.get(frame_line_index).prevline;
+                    if let Some(prev) = prevline {
+                        let prev_height = self.line_arena.get(prev).height(width);
+                        self.cursor_frame = (prevline, prev_height - 1);
+                    } else {
+                        // We've hit the top
+                        return;
+                    }
+                } else {
+                    self.cursor_frame = (maybe_frame_line_index, line_height - 1);
+                }
+            }
+            // cursor_display stays the same
+        } else {
+            self.cursor_display = (cur_y - 1, cur_x);
+        }
+
+        if display_after {
+            self.display_at_frame_cursor();
+        }
+    }
+
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
@@ -160,7 +226,6 @@ fn get_window_dimensions(window: WINDOW) -> WindowYX {
     let mut width = 0;
     let mut height = 0;
     getmaxyx(window, &mut height, &mut width);
-    println!("dimensions: {}, {}", height, width);
 
     (height as usize, width as usize)
 }

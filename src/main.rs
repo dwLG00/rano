@@ -42,6 +42,9 @@ fn main() {
             KEY_DOWN => {
                 editor.scroll_down(false);
             },
+            KEY_UP => {
+                editor.scroll_up(false);
+            },
             _ => {}
         }
         ch = getch();
