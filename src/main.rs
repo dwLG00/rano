@@ -19,6 +19,7 @@ fn open_file() -> nc::Editor {
     nc::Editor::from_file(file, stdscr())
 }
 
+//#[cfg(feature = "wide")]
 fn main() {
     initscr();
     raw();
@@ -31,28 +32,34 @@ fn main() {
     editor.move_cursor_to();
     refresh();
 
-    let mut ch = getch();
-    while ch != KEY_F(1) {
+    let mut ch = wget_wch(stdscr());
+    while true {
         clear();
         match ch {
-            KEY_DOWN => {
+            Some(WchResult::KeyCode(KEY_DOWN)) => {
                 editor.scroll_down(false);
             },
-            KEY_UP => {
+            Some(WchResult::KeyCode(KEY_UP)) => {
                 editor.scroll_up(false);
             },
-            KEY_RIGHT => {
+            Some(WchResult::KeyCode(KEY_RIGHT)) => {
                 editor.scroll_right(false);
             },
-            KEY_LEFT => {
+            Some(WchResult::KeyCode(KEY_LEFT)) => {
                 editor.scroll_left(false);
             },
-            _ => {}
+            Some(WchResult::Char(c)) => {
+                // Typed some character
+                editor.type_character(char::from_u32(c as u32).expect("Invalid char"), false);
+            },
+            _ => {
+                break;
+            }
         }
         editor.display_at_frame_cursor();
         editor.move_cursor_to();
         refresh();
-        ch = getch();
+        ch = wget_wch(stdscr());
     }
 
     /*
@@ -85,3 +92,12 @@ fn main() {
     */
     endwin();
 }
+
+/*#[cfg(not(feature = "wide"))]
+fn main() {
+    initscr();
+    addstr("Need wide character support").unwrap();
+    getch();
+    endwin();
+}
+*/

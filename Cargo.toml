@@ -6,5 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ncurses = "6.0.0"
+ncurses = { version="6.0.0", features=["wide"] }
 generational-arena = "0.2"
+
+#[features]
+#wide = []
