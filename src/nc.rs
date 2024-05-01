@@ -17,7 +17,6 @@ type WindowYX = (usize, usize);
 type Buffer = Vec<Vec<char>>;
 type BufferSlice<'a> = &'a [Vec<char>];
 
-#[derive(Debug)]
 pub struct Editor {
     line_arena: lines::LineArena,
     cursor_text: TextCursor,
@@ -369,51 +368,19 @@ impl Editor {
 
     pub fn newline(&mut self, display_after: bool) {
         // Handles newline
-        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
-
-        if let Some(text_line_index) = maybe_text_line_index {
-            let newline = self.line_arena.split(text_line_index, line_pos);
-            // Move cursor right
-            self.scroll_right(display_after);
-
-            // DEBUG
-            //panic!("{}", self.line_arena.export());
-            /*
-            let (maybe_tli_2, lipo_2) = self.cursor_text;
-            if let Some(tli_2) = maybe_tli_2 {
-                let prevline = self.line_arena.get(tli_2).prevline;
-                if let Some(previdx) = prevline {
-                    panic!(".$'{}', '{}', '{}', '{}'.$",
-                        self.line_arena.get(text_line_index).to_string(),
-                        self.line_arena.get(newline).to_string(),
-                        self.line_arena.get(tli_2).to_string(),
-                        self.line_arena.get(previdx).to_string()
-                    );
-                    panic!(".${}.$", previdx == tli_2);
-                }
-            }
-            */
-            
-        }
-    }
-
-    pub fn backspace(&mut self, display_after: bool) {
-    }
-
-    fn panic_dump(&mut self) {
-        // Dumps self info and then panics
-        // Use only for debugging purposes
         let (cur_y, cur_x) = self.cursor_display; // Display cursor position
         let (height, width) = self.size;
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
-        panic!("display cursor (yx): ({}, {})\nframe cursor: (idx, {})\ntext cursor: (idx, {})\n",
-            cur_y,
-            cur_x,
-            line_height,
-            line_pos
-        );
+        if let Some(text_line_index) = maybe_text_line_index {
+            self.line_arena.split(text_line_index, line_pos);
+            // Move cursor right
+            self.scroll_right(display_after);
+        }
+    }
+
+    pub fn backspace(&mut self, display_after: bool) {
     }
 }
 

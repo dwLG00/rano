@@ -5,7 +5,6 @@ use std::fs;
 use std::io::Read;
 use std::cmp::{min, max};
 
-#[derive(Debug)]
 pub struct LineArena {
     arena: Arena<Line>,
     head: Option<Index>,
@@ -109,7 +108,7 @@ impl LineArena {
         arena[line].nextline = arena[index].nextline.take();
         arena[index].nextline = Some(line);
 
-        if let Some(line_index) = arena[line].nextline {
+        if let Some(line_index) = arena[index].nextline {
             arena[line].prevline = arena[line_index].prevline.take();
             arena[line_index].prevline = Some(line_index);
         }
@@ -300,10 +299,10 @@ impl LineArena {
         }
     }
 
-    pub fn split(&mut self, index: Index, split_point: usize) -> Index {
+    pub fn split(&mut self, index: Index, split_point: usize) {
         // Splits line into [..split_point] and [split_point..]
-        // Mutates this Line into [..split_point], and returns index
-        // of Line with [split_point..]
+        // Mutates this Line into [..split_point], and returns Line
+        // with [split_point..]
 
         let arena = &mut self.arena;
         let line_length = arena[index].len();
@@ -314,10 +313,10 @@ impl LineArena {
 
         if split_point == 0 {
             // Hit enter at beginning -> newline behind
-            self.add_empty_line_before(index)
+            self.add_empty_line_before(index);
         } else if split_point == line_length {
             // Hit enter at end -> newline in front
-            self.add_empty_line_after(index)
+            self.add_empty_line_after(index);
         } else {
             // Split off the extra, create new Line, insert after
             let current_height = arena[index].height(self.width);
@@ -326,7 +325,7 @@ impl LineArena {
             let line = Line::new_from(split_off);
             // Update line_count so that the adjusted line_count after insert_after() is correct
             self.line_count -= (current_height - new_height); // Guarantees (current - new) >= 0
-            self.insert_after(line, index)
+            self.insert_after(line, index);
         }
     }
 
@@ -409,7 +408,6 @@ impl LineArena {
     }
 }
 
-#[derive(Debug)]
 pub struct Line {
     pub prevline: Option<Index>,
     pub nextline: Option<Index>,
@@ -502,9 +500,5 @@ impl Line {
         let tail_begin = (n - 1) * width;
         slices.push(self.content[tail_begin..].to_vec());
         slices
-    }
-
-    pub fn to_string(&self) -> String {
-        String::from_iter(&self.content)
     }
 }
