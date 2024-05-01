@@ -153,6 +153,7 @@ impl Editor {
                 } else {
                     self.cursor_frame = (maybe_frame_line_index, line_height + 1);
                 }
+                self.cursor_display = (cur_y, next_display_cursor);
             }
             // cursor_display stays the same
         } else {
@@ -220,7 +221,7 @@ impl Editor {
                     self.cursor_frame = (maybe_frame_line_index, line_height - 1);
                 }
             }
-            // cursor_display stays the same
+            self.cursor_display = (cur_y, next_display_cursor);
         } else {
             self.cursor_display = (cur_y - 1, next_display_cursor);
         }

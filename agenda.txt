@@ -9,4 +9,3 @@
     - Add text insertion
 
 - Bug fix
-    - Fix bug where pressing down when cursor is at bottom sometimes causes cursor to "overflow"
