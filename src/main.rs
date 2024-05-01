@@ -34,10 +34,6 @@ fn main() {
     let mut ch = getch();
     while ch != KEY_F(1) {
         clear();
-        editor.display_at_frame_cursor();
-        editor.move_cursor_to();
-        refresh();
-
         match ch {
             KEY_DOWN => {
                 editor.scroll_down(false);
@@ -47,6 +43,9 @@ fn main() {
             },
             _ => {}
         }
+        editor.display_at_frame_cursor();
+        editor.move_cursor_to();
+        refresh();
         ch = getch();
     }
 

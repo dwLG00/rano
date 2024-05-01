@@ -3,7 +3,6 @@
 
 - Work on basic editor functionality
     - Add arrow movement for moving screens
-        - up
         - left
         - right
     - Add cursor
