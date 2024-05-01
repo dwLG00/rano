@@ -2,10 +2,7 @@
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
 
 - Work on basic editor functionality
-    - Add arrow movement for moving screens
-        - left
-        - right
-    - Add cursor
     - Add text insertion
+    - Add enter
 
 - Bug fix

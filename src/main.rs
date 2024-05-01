@@ -44,6 +44,9 @@ fn main() {
             KEY_RIGHT => {
                 editor.scroll_right(false);
             },
+            KEY_LEFT => {
+                editor.scroll_left(false);
+            },
             _ => {}
         }
         editor.display_at_frame_cursor();

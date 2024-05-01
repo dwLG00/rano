@@ -284,6 +284,69 @@ impl Editor {
             self.display_at_frame_cursor();
         }
     }
+
+    pub fn scroll_left(&mut self, display_after: bool) {
+        // Scroll the text cursor left, and modify other cursors as appropriate
+
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        let mut prev_line_flag = false;
+        let mut next_display_cursor = 0;
+
+        // Update cursor_text
+        if let Some(line_index) = maybe_text_line_index {
+            if line_pos == 0 {
+                // We've jumped to the previous Line
+                match self.line_arena.get(line_index).prevline {
+                    Some(prev_index) => {
+                        let prev_len = self.line_arena.get(prev_index).len();
+                        let tail_length = prev_len - (prev_len / width) * width; // Mod width
+                        next_display_cursor = tail_length; // This is where the display cursor cur_x will be set to
+                        self.cursor_text = (Some(prev_index), prev_len);
+                    },
+                    None => {
+                        // We've reached the beginning of the text => don't change anything
+                        return
+                    }
+                }
+                prev_line_flag = true;
+            } else {
+                next_display_cursor = width - 1; // Wrap around
+                self.cursor_text = (maybe_text_line_index, line_pos - 1);
+            }
+        }
+
+        // Update cursor_display and cursor_frame
+        if cur_x == 0 && cur_y == 0 {
+            // Can't scroll past
+            if let Some(frame_line_index) = maybe_frame_line_index {
+                if line_height == 0 {
+                    // Move to the previous line
+                    let prevline = self.line_arena.get(frame_line_index).prevline;
+                    if let Some(prev) = prevline {
+                        let prev_height = self.line_arena.get(prev).height(width);
+                        self.cursor_frame = (prevline, prev_height - 1);
+                    }
+                } else {
+                    self.cursor_frame = (maybe_frame_line_index, line_height - 1);
+                }
+                self.cursor_display = (cur_x, next_display_cursor);
+            }
+        } else {
+            if cur_x == 0 || prev_line_flag {
+                self.cursor_display = (cur_y - 1, next_display_cursor);
+            } else {
+                self.cursor_display = (cur_y, cur_x - 1);
+            }
+        }
+
+        if display_after {
+            self.display_at_frame_cursor();
+        }
+    }
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
