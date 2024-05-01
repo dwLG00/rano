@@ -1,9 +1,10 @@
 - lines.rs
-    - Add display_frame but starting from a particular index
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
 
 - Work on basic editor functionality
-    - Move ncurses displaying stuff from main.rs to nc.rs
     - Add arrow movement for moving screens
+        - up
+        - left
+        - right
     - Add cursor
     - Add text insertion
