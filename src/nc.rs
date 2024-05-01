@@ -183,13 +183,13 @@ impl Editor {
                     Some(prev_index) => {
                         // Check if the tail of the previous line is less than cur_x
                         let prev_len = self.line_arena.get(prev_index).len();
-                        let tail_length = prev_len - (prev_len / width) * width; // Mod width
-                        next_display_cursor = min(tail_length, cur_x);
+                        let tail_len = self.line_arena.get(prev_index).tail_len(width);
+                        next_display_cursor = min(tail_len, cur_x);
 
-                        if tail_length < cur_x {
+                        if tail_len < cur_x {
                             self.cursor_text = (Some(prev_index), prev_len);
                         } else {
-                            self.cursor_text = (Some(prev_index), (prev_len / width) * width + cur_x);
+                            self.cursor_text = (Some(prev_index), prev_len - tail_len + cur_x);
                         }
                     },
                     None => {
@@ -303,8 +303,8 @@ impl Editor {
                 match self.line_arena.get(line_index).prevline {
                     Some(prev_index) => {
                         let prev_len = self.line_arena.get(prev_index).len();
-                        let tail_length = prev_len - (prev_len / width) * width; // Mod width
-                        next_display_cursor = tail_length; // This is where the display cursor cur_x will be set to
+                        let tail_len = self.line_arena.get(prev_index).tail_len(width);
+                        next_display_cursor = tail_len; // This is where the display cursor cur_x will be set to
                         self.cursor_text = (Some(prev_index), prev_len);
                     },
                     None => {

@@ -432,6 +432,11 @@ impl Line {
         self.content.len()
     }
 
+    pub fn tail_len(&self, width: usize) -> usize {
+        // Get length of the "tail" - the last bit of overflow line
+        self.content.len() - (self.content.len() / width) * width
+    }
+
     pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {
         // Returns a vector of vectors of slices, each corresponding to a line
         let mut slices = Vec::<Vec<char>>::new();
