@@ -189,7 +189,13 @@ impl LineArena {
         pointer.unwrap()
     }
 
-    pub fn get(&mut self, index: Index) -> &Line {
+    pub fn get_mut(&mut self, index: Index) -> &mut Line {
+        // Get mutable reference to Line with Index
+
+        &mut self.arena[index]
+    }
+
+    pub fn get(&self, index: Index) -> &Line {
         // Get reference to Line with Index
 
         &self.arena[index]
@@ -420,6 +426,10 @@ impl Line {
     pub fn push_char(&mut self, character: char) {
         // Push a char to the contents of line
         self.content.push(character);
+    }
+    pub fn insert_char(&mut self, pos: usize, character: char) {
+        // Inserts char so that pos is the new index for the character
+        self.content.insert(pos, character);
     }
 
     pub fn height(&self, width: usize) -> usize {

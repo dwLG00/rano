@@ -348,6 +348,26 @@ impl Editor {
             self.display_at_frame_cursor();
         }
     }
+
+    pub fn type_character(&mut self, character: char, display_after: bool) {
+        // Handles typing a character
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        // Insert the character
+        if let Some(text_line_index) = maybe_text_line_index {
+            self.line_arena.get_mut(text_line_index).insert_char(line_pos, character);
+        }
+
+        // Move the cursor right
+        self.scroll_right(display_after);
+
+    }
+
+    pub fn backspace(&mut self, display_after: bool) {
+    }
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
