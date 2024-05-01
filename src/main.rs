@@ -48,9 +48,18 @@ fn main() {
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 editor.scroll_left(false);
             },
-            Some(WchResult::Char(c)) => {
+            Some(WchResult::Char(char_code)) => {
                 // Typed some character
-                editor.type_character(char::from_u32(c as u32).expect("Invalid char"), false);
+                let c = char::from_u32(char_code as u32).expect("Invalid char");
+                match c {
+                    '\n' => {
+                        // Handle newlines separately
+                        editor.newline(false);
+                    },
+                    _ => {
+                        editor.type_character(c, false);
+                    }
+                }
             },
             _ => {
                 break;
