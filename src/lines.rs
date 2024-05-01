@@ -471,6 +471,11 @@ impl Line {
             return slices;
         }
 
+        if n == 1 {
+            slices.push(self.content[..width].to_vec());
+            return slices;
+        }
+
         for i in 0..(n - 2) {
             let begin = i * width;
             let end = begin + width;

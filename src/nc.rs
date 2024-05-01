@@ -22,28 +22,29 @@ pub struct Editor {
     cursor_text: TextCursor,
     cursor_display: WindowYX,
     cursor_frame: FrameCursor,
-    size: WindowYX
+    size: WindowYX,
+    window: WINDOW
 }
 
 impl Editor {
-    pub fn new() -> Editor {
+    pub fn new(window: WINDOW) -> Editor {
         // Blank editor instance
 
-        let (_, width) = get_window_dimensions();
-        Editor::from_line_arena(lines::LineArena::new(width))
+        let (_, width) = get_window_dimensions(window);
+        Editor::from_line_arena(lines::LineArena::new(width), window)
     }
 
-    pub fn from_file(file: fs::File) -> Editor {
+    pub fn from_file(file: fs::File, window: WINDOW) -> Editor {
         // New Editor instance from a file
 
-        let (_, width) = get_window_dimensions();
-        Editor::from_line_arena(lines::LineArena::from_file(file, width))
+        let (_, width) = get_window_dimensions(window);
+        Editor::from_line_arena(lines::LineArena::from_file(file, width), window)
     }
 
-    pub fn from_line_arena(line_arena: lines::LineArena) -> Editor {
+    pub fn from_line_arena(line_arena: lines::LineArena, window: WINDOW) -> Editor {
         // New Editor instance from LineArena
 
-        let size = get_window_dimensions();
+        let size = get_window_dimensions(window);
         let head = line_arena.get_head().clone();
 
         Editor {
@@ -51,17 +52,18 @@ impl Editor {
             cursor_text: (head, 0),
             cursor_display: (0, 0),
             cursor_frame: (head, 0),
-            size: size
+            size: size,
+            window: window
         }
     }
 
-    pub fn display(buffer_slice: BufferSlice, start_at_beginning: bool, move_back: bool) {
+    pub fn display(window: WINDOW, buffer_slice: BufferSlice, start_at_beginning: bool, move_back: bool) {
         // Displays the contents of a Vec<Vec<char>>
 
         // Store the beginning ncurses cursor location in case move_back == true
         let mut start_x = 0;
         let mut start_y = 0;
-        getyx(stdscr(), &mut start_x, &mut start_y);
+        getyx(window, &mut start_x, &mut start_y);
 
         // Move to beginning if start_at_beginning == true
         if start_at_beginning {
@@ -76,7 +78,7 @@ impl Editor {
             // At end of each Vec<char>, move cursor to the next line
             let mut cur_x = 0;
             let mut cur_y = 0;
-            getyx(stdscr(), &mut cur_y, &mut cur_x);
+            getyx(window, &mut cur_y, &mut cur_x);
             mv(cur_y + 1, 0);
         }
 
@@ -93,7 +95,7 @@ impl Editor {
         if let Some(index) = maybe_index {
             let buffer = self.line_arena.display_frame_from(index, width, height + line_height);
             if buffer.len() > line_height {
-                Editor::display(&buffer[line_height..], false, false);
+                Editor::display(self.window, &buffer[line_height..], false, false);
             }
         }
     }
@@ -112,8 +114,6 @@ impl Editor {
         let (height, width) = self.size;
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
-
-        let mut jumped_line = false;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -155,11 +155,12 @@ impl Editor {
     }
 }
 
-fn get_window_dimensions() -> WindowYX {
+fn get_window_dimensions(window: WINDOW) -> WindowYX {
     // Return dimensions of terminal window (height, width)
     let mut width = 0;
     let mut height = 0;
-    getmaxyx(stdscr(), &mut height, &mut width);
+    getmaxyx(window, &mut height, &mut width);
+    println!("dimensions: {}, {}", height, width);
 
     (height as usize, width as usize)
 }

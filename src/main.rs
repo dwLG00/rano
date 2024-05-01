@@ -16,15 +16,20 @@ fn open_file() -> nc::Editor {
 
     let reader = fs::File::open(Path::new(&args[1]));
     let mut file = reader.ok().expect("Unable to open file");
-    nc::Editor::from_file(file)
+    nc::Editor::from_file(file, stdscr())
 }
 
 fn main() {
-    let mut editor = open_file();
     initscr();
     raw();
     keypad(stdscr(), true);
     noecho();
+
+    let mut editor = open_file();
+
+    editor.display_at_frame_cursor();
+    editor.move_cursor_to();
+    refresh();
 
     let mut ch = getch();
     while ch != KEY_F(1) {
