@@ -115,13 +115,16 @@ impl Editor {
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
+        let mut next_display_cursor = 0;
+
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
             if line_pos + width >= self.line_arena.get(line_index).len() {
                 // We've jumped to the next Line
                 match self.line_arena.get(line_index).nextline {
                     Some(next_index) => {
-                        self.cursor_text = (Some(next_index), min(self.line_arena.get(next_index).len(), cur_x));
+                        next_display_cursor = min(self.line_arena.get(next_index).len(), cur_x);
+                        self.cursor_text = (Some(next_index), next_display_cursor);
                     },
                     None => {
                         // We've reached the end of the text => don't change anything
@@ -129,6 +132,7 @@ impl Editor {
                     }
                 }
             } else {
+                next_display_cursor = cur_x;
                 self.cursor_text = (maybe_text_line_index, line_pos + width);
             }
         }
@@ -146,7 +150,7 @@ impl Editor {
             }
             // cursor_display stays the same
         } else {
-            self.cursor_display = (cur_y + 1, cur_x);
+            self.cursor_display = (cur_y + 1, next_display_cursor);
         }
 
         if display_after {
@@ -162,6 +166,8 @@ impl Editor {
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
+        let mut next_display_cursor = 0;
+
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
             if line_pos < width {
@@ -171,6 +177,8 @@ impl Editor {
                         // Check if the tail of the previous line is less than cur_x
                         let prev_len = self.line_arena.get(prev_index).len();
                         let tail_length = prev_len - (prev_len / width) * width; // Mod width
+                        next_display_cursor = min(tail_length, cur_x);
+
                         if tail_length < cur_x {
                             self.cursor_text = (Some(prev_index), prev_len);
                         } else {
@@ -183,6 +191,7 @@ impl Editor {
                     }
                 }
             } else {
+                next_display_cursor = cur_x;
                 self.cursor_text = (maybe_text_line_index, line_pos - width);
             }
         }
@@ -207,7 +216,7 @@ impl Editor {
             }
             // cursor_display stays the same
         } else {
-            self.cursor_display = (cur_y - 1, cur_x);
+            self.cursor_display = (cur_y - 1, next_display_cursor);
         }
 
         if display_after {
