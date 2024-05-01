@@ -34,7 +34,7 @@ fn main() {
 
     let mut ch = wget_wch(stdscr());
     while true {
-        clear();
+        erase();
         match ch {
             Some(WchResult::KeyCode(KEY_DOWN)) => {
                 editor.scroll_down(false);
