@@ -7,3 +7,7 @@
         - right
     - Add cursor
     - Add text insertion
+
+- Bug fix
+    - Fix bug where multiple-line wrapped text doesn't display properly (only tail is displayed)
+        - display cursor looks fine
