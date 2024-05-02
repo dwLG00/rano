@@ -34,7 +34,6 @@ fn main() {
 
     let mut ch = wget_wch(stdscr());
     while true {
-        erase();
         match ch {
             Some(WchResult::KeyCode(KEY_DOWN)) => {
                 editor.scroll_down(false);
@@ -65,6 +64,7 @@ fn main() {
                 break;
             }
         }
+        werase(stdscr());
         editor.display_at_frame_cursor();
         editor.move_cursor_to();
         refresh();
