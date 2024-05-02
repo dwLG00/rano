@@ -391,31 +391,13 @@ impl Editor {
                 } else {
                     self.cursor_display = (cur_y + 1, cur_x);
                 }
+                if display_after {
+                    self.display_at_frame_cursor();
+                }
             } else {
                 self.line_arena.split(text_line_index, line_pos);
                 self.scroll_right(display_after);
             }
-
-
-
-            /*
-
-
-            let is_empty = (self.line_arena.get(text_line_index).len() == 0); // Newlining on an empty line -> normal scroll_right
-
-            let newline = self.line_arena.split(text_line_index, line_pos);
-            if self.line_arena.get(text_line_index).len() == 0 && !is_empty {
-                // Newlining at the front -> just shift cursor down
-                if cur_y + 1 >= height {
-                    // At bottom of file; move the frame cursor
-                } else {
-                    self.cursor_display = (cur_y + 1, cur_x);
-                }
-            } else {
-                // Just move cursor right
-                self.scroll_right(display_after);
-            }
-            */
         }
     }
 

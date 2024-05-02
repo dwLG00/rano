@@ -7,5 +7,5 @@
     - Add 
 
 - Bug fix
-    - Fix blinking on keypress that happens sometimes
-    - Hitting enter doesn't move the cursor position (needs special code to create an empty line after)
+    - Fix blinking on newline
+    - Fix newlining then scrolling back up then hitting right not scrolling the frame
