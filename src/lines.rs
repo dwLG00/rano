@@ -338,7 +338,8 @@ impl LineArena {
             // Move the contents of the next line into current line,
             // and then pop the next line
 
-            arena[index].merge(arena[nextline]); // values merged via reference
+            let content = arena[nextline].content.clone();
+            arena[index].extend(&content);
             self.pop_index(nextline);
         }
     }
@@ -447,13 +448,13 @@ impl Line {
         self.content.insert(pos, character);
     }
 
-    pub fn pop_char(&mut self, pos: usize) -> Option<char> {
-        self.content.pop(pos)
+    pub fn pop_char(&mut self, pos: usize) -> char {
+        self.content.remove(pos)
     }
 
-    pub fn merge(&mut self, target: Line) {
+    pub fn extend(&mut self, target: &Vec<char>) {
         // Merges target content into own content
-        self.content.extend(&target.content);
+        self.content.extend(target);
     }
 
     pub fn height(&self, width: usize) -> usize {

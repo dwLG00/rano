@@ -55,6 +55,10 @@ fn main() {
                         // Handle newlines separately
                         editor.newline(false);
                     },
+                    '\u{007F}' => {
+                        // Handle backspaces separately
+                        editor.backspace(false);
+                    },
                     _ => {
                         editor.type_character(c, false);
                     }

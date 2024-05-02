@@ -415,7 +415,7 @@ impl Editor {
                 // The cursor position is one space in front of the character
                 // we want to delete
 
-                self.line_arena.get(text_line_index).pop_char(line_pos - 1);
+                self.line_arena.get_mut(text_line_index).pop_char(line_pos - 1);
                 self.cursor_text = (maybe_text_line_index, line_pos - 1);
 
                 if cur_y == 0 && cur_x == 0 { // At top of screen -> move frame cursor, wrap around
@@ -428,14 +428,14 @@ impl Editor {
                 }
             } else { // We're at the front of the line, which means we need to merge this line with the line behind it
                 match self.line_arena.get(text_line_index).prevline {
-                    Some(prevline) => {
-                        let new_line_pos = self.line_arena.get(prevline).len();
-                        self.line_arena.merge(prevline);
+                    Some(prev) => {
+                        let new_line_pos = self.line_arena.get(prev).len();
+                        self.line_arena.merge(prev);
 
-                        self.cursor_text = (prevline, new_line_pos);
+                        self.cursor_text = (Some(prev), new_line_pos);
 
                         if cur_y == 0 { // We're at the top -> prevline should be the new frame cursor
-                            self.cursor_frame = (Some(prevline), self.line_arena.get(prevline).height(width) - 1);
+                            self.cursor_frame = (Some(prev), self.line_arena.get(prev).height(width) - 1);
                             self.cursor_display = (cur_y, width - 1);
                         } else {
                             self.cursor_display = (cur_y - 1, width - 1);
@@ -445,6 +445,9 @@ impl Editor {
                     }
                 }
             }
+        }
+        if display_after {
+            self.display_at_frame_cursor();
         }
     }
 }
