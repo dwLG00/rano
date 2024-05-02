@@ -108,7 +108,7 @@ impl LineArena {
         arena[line].nextline = arena[index].nextline.take();
         arena[index].nextline = Some(line);
 
-        if let Some(line_index) = arena[index].nextline {
+        if let Some(line_index) = arena[line].nextline {
             arena[line].prevline = arena[line_index].prevline.take();
             arena[line_index].prevline = Some(line_index);
         }
