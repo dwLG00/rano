@@ -329,6 +329,20 @@ impl LineArena {
         }
     }
 
+    pub fn merge(&mut self, index: Index) {
+        // Merges Line at index with Line after it.
+        // Does nothing if nexline is None
+
+        let arena = &mut self.arena;
+        if let Some(nextline) = arena[index].nextline {
+            // Move the contents of the next line into current line,
+            // and then pop the next line
+
+            arena[index].merge(arena[nextline]); // values merged via reference
+            self.pop_index(nextline);
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.length
     }
@@ -427,9 +441,15 @@ impl Line {
         // Push a char to the contents of line
         self.content.push(character);
     }
+
     pub fn insert_char(&mut self, pos: usize, character: char) {
         // Inserts char so that pos is the new index for the character
         self.content.insert(pos, character);
+    }
+
+    pub fn merge(&mut self, target: Line) {
+        // Merges target content into own content
+        self.content.extend(&target.content);
     }
 
     pub fn height(&self, width: usize) -> usize {
