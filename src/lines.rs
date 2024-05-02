@@ -50,14 +50,14 @@ impl LineArena {
                 arena[pointer].push_char(ch);
             }
         }
-        let line_arena = LineArena {
+        let mut line_arena = LineArena {
             arena: arena,
             head: Some(head),
             length: length,
             width: width,
             line_count: 0 // Temporary value; update later
         };
-        line_arena.get_line_count();
+        line_arena.update_line_count();
         line_arena
     }
 

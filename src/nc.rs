@@ -430,15 +430,16 @@ impl Editor {
                 match self.line_arena.get(text_line_index).prevline {
                     Some(prev) => {
                         let new_line_pos = self.line_arena.get(prev).len();
+                        let new_display_pos = self.line_arena.get(prev).tail_len(width);
                         self.line_arena.merge(prev);
 
                         self.cursor_text = (Some(prev), new_line_pos);
 
                         if cur_y == 0 { // We're at the top -> prevline should be the new frame cursor
                             self.cursor_frame = (Some(prev), self.line_arena.get(prev).height(width) - 1);
-                            self.cursor_display = (cur_y, width - 1);
+                            self.cursor_display = (cur_y, new_display_pos);
                         } else {
-                            self.cursor_display = (cur_y - 1, width - 1);
+                            self.cursor_display = (cur_y - 1, new_display_pos);
                         }
                     },
                     None => { // We're at the very top of the file => do nothing
