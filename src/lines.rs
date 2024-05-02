@@ -110,7 +110,7 @@ impl LineArena {
 
         if let Some(line_index) = arena[line].nextline {
             arena[line].prevline = arena[line_index].prevline.take();
-            arena[line_index].prevline = Some(line_index);
+            arena[line_index].prevline = Some(line);
         }
 
         // Update line_count and length
@@ -311,7 +311,7 @@ impl LineArena {
             panic!("split_point index out of range");
         }
 
-        if split_point == 0 {
+        if split_point == 0 && split_point != line_length {
             // Hit enter at beginning -> newline behind
             self.add_empty_line_before(index);
         } else if split_point == line_length {
@@ -445,6 +445,10 @@ impl Line {
     pub fn tail_len(&self, width: usize) -> usize {
         // Get length of the "tail" - the last bit of overflow line
         self.content.len() - (self.content.len() / width) * width
+    }
+
+    pub fn to_string(&self) -> String {
+        String::from_iter(&self.content)
     }
 
     pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {

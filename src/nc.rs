@@ -374,14 +374,54 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         if let Some(text_line_index) = maybe_text_line_index {
-            self.line_arena.split(text_line_index, line_pos);
-            // Move cursor right
-            self.scroll_right(display_after);
+            if line_pos == 0 && self.line_arena.get(text_line_index).len() != 0 {
+                let behind = self.line_arena.split(text_line_index, line_pos);
+
+                // Check if we need to shift frame down
+                if cur_y + 1 == height {
+                    if let Some(frame_line_index) = maybe_frame_line_index {
+                        if line_height + 1 >= self.line_arena.get(frame_line_index).height(width) {
+                            // Move frame cursor
+                            self.cursor_frame = (self.line_arena.get(frame_line_index).nextline, 0);
+                        } else {
+                            self.cursor_frame = (maybe_frame_line_index, line_height + 1);
+                        }
+                        // Don't change the display cursor
+                    }
+                } else {
+                    self.cursor_display = (cur_y + 1, cur_x);
+                }
+            } else {
+                self.line_arena.split(text_line_index, line_pos);
+                self.scroll_right(display_after);
+            }
+
+
+
+            /*
+
+
+            let is_empty = (self.line_arena.get(text_line_index).len() == 0); // Newlining on an empty line -> normal scroll_right
+
+            let newline = self.line_arena.split(text_line_index, line_pos);
+            if self.line_arena.get(text_line_index).len() == 0 && !is_empty {
+                // Newlining at the front -> just shift cursor down
+                if cur_y + 1 >= height {
+                    // At bottom of file; move the frame cursor
+                } else {
+                    self.cursor_display = (cur_y + 1, cur_x);
+                }
+            } else {
+                // Just move cursor right
+                self.scroll_right(display_after);
+            }
+            */
         }
     }
 
     pub fn backspace(&mut self, display_after: bool) {
     }
+
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
