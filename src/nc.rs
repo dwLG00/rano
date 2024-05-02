@@ -373,6 +373,7 @@ impl Editor {
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
+        // handle frame and display cursors
         if let Some(text_line_index) = maybe_text_line_index {
             if line_pos == 0 && self.line_arena.get(text_line_index).len() != 0 {
                 let behind = self.line_arena.split(text_line_index, line_pos);
@@ -402,8 +403,50 @@ impl Editor {
     }
 
     pub fn backspace(&mut self, display_after: bool) {
-    }
+        // Handles hitting backspace
 
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        if let Some(text_line_index) = maybe_text_line_index {
+            if line_pos > 0 { // We are in the middle of a line
+                // The cursor position is one space in front of the character
+                // we want to delete
+
+                self.line_arena.get(text_line_index).pop_char(line_pos - 1);
+                self.cursor_text = (maybe_text_line_index, line_pos - 1);
+
+                if cur_y == 0 && cur_x == 0 { // At top of screen -> move frame cursor, wrap around
+                    self.cursor_frame = (maybe_frame_line_index, line_height - 1);
+                    self.cursor_display = (cur_y, width - 1);
+                } else if cur_x == 0 { // At left -> wrap around
+                    self.cursor_display = (cur_y - 1, width - 1);
+                } else { // Just move left
+                    self.cursor_display = (cur_y, cur_x - 1);
+                }
+            } else { // We're at the front of the line, which means we need to merge this line with the line behind it
+                match self.line_arena.get(text_line_index).prevline {
+                    Some(prevline) => {
+                        let new_line_pos = self.line_arena.get(prevline).len();
+                        self.line_arena.merge(prevline);
+
+                        self.cursor_text = (prevline, new_line_pos);
+
+                        if cur_y == 0 { // We're at the top -> prevline should be the new frame cursor
+                            self.cursor_frame = (Some(prevline), self.line_arena.get(prevline).height(width) - 1);
+                            self.cursor_display = (cur_y, width - 1);
+                        } else {
+                            self.cursor_display = (cur_y - 1, width - 1);
+                        }
+                    },
+                    None => { // We're at the very top of the file => do nothing
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {

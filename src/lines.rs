@@ -447,6 +447,10 @@ impl Line {
         self.content.insert(pos, character);
     }
 
+    pub fn pop_char(&mut self, pos: usize) -> Option<char> {
+        self.content.pop(pos)
+    }
+
     pub fn merge(&mut self, target: Line) {
         // Merges target content into own content
         self.content.extend(&target.content);
