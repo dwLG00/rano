@@ -44,13 +44,14 @@ fn create_control_bar_window() -> WINDOW {
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
-    let window = newwin(1, max_x, max_y, 0);
+    let window = newwin(1, max_x, max_y - 1, 0);
     wrefresh(window);
     window
 }
 
 fn draw_control_bar(window: WINDOW) {
     // Draws control sequences
+    mvwaddstr(window, 0, 0, "HELP =>\t\t\t[Ctrl-X]  Quit").unwrap();
 }
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
@@ -66,24 +67,31 @@ fn main() {
     initscr();
     raw();
     noecho();
+    start_color();
 
     // Create windows
     let mut windows = Vec::new();
-    windows.push(stdscr());
 
     let editor_window = create_editor_window();
-    windows.push(editor_window);
-    //let ctrl_window = create_control_bar_window();
+    let ctrl_window = create_control_bar_window();
 
+    windows.push(ctrl_window); // Draw control bar before editor
+    windows.push(editor_window);
+
+    keypad(stdscr(), true);
     for window in windows.iter() {
         keypad(window.clone(), true);
     }
 
+    // Initialize editor
     let mut editor = open_file(editor_window);
 
+
+    draw_control_bar(ctrl_window);
     editor.display_at_frame_cursor();
     editor.move_cursor_to(editor_window);
-    wrefresh(editor_window);
+    //wrefresh(editor_window);
+    refresh_all_windows(&windows);
 
     let mut ch = wget_wch(editor_window);
     while true {
@@ -133,6 +141,7 @@ fn main() {
         editor.display_at_frame_cursor();
         editor.move_cursor_to(editor_window);
         wrefresh(editor_window);
+        //refresh_all_windows(&windows);
         ch = wget_wch(editor_window);
     }
     endwin();
