@@ -2,10 +2,12 @@
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
 
 - Work on basic editor functionality
-    - Add text 
     - Add smart cursor pos (when hitting down repeatedly, cursor should "remember" its rough x coordinate)
-    - Add 
+    - Add opening and saving files
+    - Add selecting text
+    - Add cut and copy
+    - Add clipboard
+    - Add search
+    - Add find and replace
 
 - Bug fix
-    - Fix blinking on newline
-    - Fix newlining then scrolling back up then hitting right not scrolling the frame
