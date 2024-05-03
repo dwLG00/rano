@@ -23,7 +23,9 @@ pub struct Editor {
     cursor_display: WindowYX,
     cursor_frame: FrameCursor,
     size: WindowYX,
-    window: WINDOW
+    window: WINDOW,
+    smart_cursor: bool, // smart cursor flag
+    smart_cursor_pos: usize
 }
 
 impl Editor {
@@ -60,7 +62,9 @@ impl Editor {
             cursor_display: (0, 0),
             cursor_frame: (head, 0),
             size: size,
-            window: window
+            window: window,
+            smart_cursor: false,
+            smart_cursor_pos: 0
         }
     }
 
@@ -129,6 +133,7 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         let mut next_display_cursor = 0;
+        let mut nextline_len = 0;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -137,6 +142,12 @@ impl Editor {
                 match self.line_arena.get(line_index).nextline {
                     Some(next_index) => {
                         next_display_cursor = min(self.line_arena.get(next_index).len(), cur_x);
+                        nextline_len = min(self.line_arena.get(next_index).len(), width - 1);
+                        // If smart cursor flag isn't set, then set it and store current x pos
+                        if !self.smart_cursor {
+                            self.smart_cursor = true;
+                            self.smart_cursor_pos = cur_x;
+                        }
                         self.cursor_text = (Some(next_index), next_display_cursor);
                     },
                     None => {
@@ -151,6 +162,13 @@ impl Editor {
             }
         }
 
+        let mut next_display_pos;
+        if self.smart_cursor {
+            next_display_pos = min(max(next_display_cursor, self.smart_cursor_pos), nextline_len);
+        } else{
+            next_display_pos = next_display_cursor;
+        }
+
         // Update cursor_display and cursor_frame
         if cur_y + 1 == height {
             // Can't scroll past
@@ -161,11 +179,11 @@ impl Editor {
                 } else {
                     self.cursor_frame = (maybe_frame_line_index, line_height + 1);
                 }
-                self.cursor_display = (cur_y, next_display_cursor);
+                self.cursor_display = (cur_y, next_display_pos);
             }
             // cursor_display stays the same
         } else {
-            self.cursor_display = (cur_y + 1, next_display_cursor);
+            self.cursor_display = (cur_y + 1, next_display_pos);
         }
 
         if display_after {
@@ -182,6 +200,7 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         let mut next_display_cursor = 0;
+        let mut prevline_len = 0;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -193,6 +212,13 @@ impl Editor {
                         let prev_len = self.line_arena.get(prev_index).len();
                         let tail_len = self.line_arena.get(prev_index).tail_len(width);
                         next_display_cursor = min(tail_len, cur_x);
+                        prevline_len = min(self.line_arena.get(prev_index).len(), width - 1);
+
+                        // If smart cursor flag isn't set, then set it and store current x pos
+                        if !self.smart_cursor {
+                            self.smart_cursor = true;
+                            self.smart_cursor_pos = cur_x;
+                        }
 
                         if tail_len < cur_x {
                             self.cursor_text = (Some(prev_index), prev_len);
@@ -210,6 +236,13 @@ impl Editor {
                 next_display_cursor = cur_x;
                 self.cursor_text = (maybe_text_line_index, line_pos - width);
             }
+        }
+
+        let mut next_display_pos;
+        if self.smart_cursor {
+            next_display_pos = min(max(next_display_cursor, self.smart_cursor_pos), prevline_len);
+        } else{
+            next_display_pos = next_display_cursor;
         }
 
         // Update cursor_display and cursor_frame
@@ -230,9 +263,9 @@ impl Editor {
                     self.cursor_frame = (maybe_frame_line_index, line_height - 1);
                 }
             }
-            self.cursor_display = (cur_y, next_display_cursor);
+            self.cursor_display = (cur_y, next_display_pos);
         } else {
-            self.cursor_display = (cur_y - 1, next_display_cursor);
+            self.cursor_display = (cur_y - 1, next_display_pos);
         }
 
         if display_after {
@@ -249,6 +282,9 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         let mut next_line_flag = false;
+
+        // Disable flag
+        self.smart_cursor = false;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -305,6 +341,9 @@ impl Editor {
 
         let mut prev_line_flag = false;
         let mut next_display_cursor = 0;
+
+        // Disable flag
+        self.smart_cursor = false;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
