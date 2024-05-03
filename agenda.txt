@@ -3,7 +3,6 @@
 
 - Work on basic editor functionality
     - Add smart cursor pos (when hitting down repeatedly, cursor should "remember" its rough x coordinate)
-    - Add opening and saving files
     - Add selecting text
     - Add cut and copy
     - Add clipboard

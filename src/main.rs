@@ -21,7 +21,7 @@ fn open_file(window: WINDOW, path: &str) -> nc::Editor {
     nc::Editor::from_file(file, window)
 }
 
-fn save_to_file(filename: String, editor: nc::Editor) -> Result<(), io::Error>{
+fn save_to_file(filename: String, editor: &nc::Editor) -> Result<(), io::Error>{
     // Saves the file to the given path
     let mut maybe_file = fs::OpenOptions::new().write(true).create(true).open(&filename);
     match maybe_file {
@@ -110,7 +110,7 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
     let left_limit = 20; // If cur_x == left_limit, prevent deletion
     let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
 
-    let mut filename_len = path.len();
+    let mut filename_buffer = path.clone();
 
     let mut ch;
     loop {
@@ -137,10 +137,12 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
                         wmove(window, cur_y, cur_x - 1);
                         wdelch(window);
                         winsch(window, ' ' as chtype);
-                        filename_len -= 1;
+                        filename_buffer.pop();
                     },
                     '\n' => {
                         // Enter
+                        save_to_file(filename_buffer, editor);
+                        break;
                     },
                     _ => {
                         if cur_x == right_limit {
@@ -149,7 +151,7 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
                         }
 
                         waddch(window, c as chtype);
-                        filename_len += 1;
+                        filename_buffer.push(c);
                     }
                 }
             },
