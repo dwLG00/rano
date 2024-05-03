@@ -31,7 +31,7 @@ fn create_editor_window() -> WINDOW {
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
-    let window = newwin(max_y - 1, max_x, 0, 0);
+    let window = newwin(max_y - 2, max_x, 0, 0);
     wrefresh(window);
     window
 }
@@ -44,14 +44,20 @@ fn create_control_bar_window() -> WINDOW {
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
-    let window = newwin(1, max_x, max_y - 1, 0);
+    let window = newwin(2, max_x, max_y - 2, 0);
     wrefresh(window);
     window
 }
 
 fn draw_control_bar(window: WINDOW) {
     // Draws control sequences
-    mvwaddstr(window, 0, 0, "HELP =>\t\t\t[Ctrl-X]  Quit").unwrap();
+
+    let mut max_x = 0;
+    let mut max_y = 0;
+    getmaxyx(window, &mut max_y, &mut max_x);
+
+    mvwaddstr(window, 0, 0, &"\u{2593}".repeat(max_x as usize)).unwrap();
+    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit").unwrap();
 }
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
@@ -64,6 +70,7 @@ fn refresh_all_windows(windows: &Vec<WINDOW>) {
 // Main loop
 
 fn main() {
+    setlocale(constants::LcCategory::all, ""); // We need this to display weird unicode characters
     initscr();
     raw();
     noecho();
