@@ -59,9 +59,13 @@ fn main() {
                         // Handle backspaces separately
                         editor.backspace(false);
                     },
-                    '\u{0003}' => {
-                        // Ctrl-C -> break
+                    '\u{0018}' => {
+                        // Ctrl-X -> break
                         break;
+                    },
+                    '\u{000F}' => {
+                        // Ctrl-O -> save loop
+                        editor.save_loop();
                     },
                     _ => {
                         editor.type_character(c, false);

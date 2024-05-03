@@ -451,6 +451,9 @@ impl Editor {
             self.display_at_frame_cursor();
         }
     }
+
+    pub fn save_loop(&mut self) -> {
+    }
 }
 
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
