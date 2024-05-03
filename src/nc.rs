@@ -452,7 +452,9 @@ impl Editor {
         }
     }
 
-    pub fn save_loop(&mut self) {
+    pub fn export(&self) -> String {
+        // Returns the contents as string
+        self.line_arena.export()
     }
 }
 

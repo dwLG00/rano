@@ -2,24 +2,48 @@ extern crate ncurses;
 use std::char;
 use ncurses::*;
 use std::env;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::fs;
+use std::io;
 use std::path::Path;
 mod lines;
 mod nc;
 
-fn open_file(window: WINDOW) -> nc::Editor {
-    // Open file given in argument, and return editor created from file contents
-    let args: Vec<_> = env::args().collect();
-    if args.len() != 2 {
-        panic!("Requires filepath argument");
-    }
+static CP_HIGHLIGHT: i16 = 1;
 
-    let reader = fs::File::open(Path::new(&args[1]));
+// File IO
+
+fn open_file(window: WINDOW, path: &str) -> nc::Editor {
+    // Open file given in argument, and return editor created from file contents
+
+    let reader = fs::File::open(Path::new(path));
     let mut file = reader.ok().expect("Unable to open file");
     nc::Editor::from_file(file, window)
 }
 
+fn save_to_file(filename: String, editor: nc::Editor) -> Result<(), io::Error>{
+    // Saves the file to the given path
+    let mut maybe_file = fs::OpenOptions::new().write(true).create(true).open(&filename);
+    match maybe_file {
+        Ok(mut file) => {
+            file.write(editor.export().as_bytes());
+            Ok(())
+        },
+        Err(T) => Err(T)
+    }
+}
+
+fn file_exists(filename: String) -> bool {
+    // Check if a file exists
+    let mut file = fs::OpenOptions::new().read(true).open(&filename);
+    match file {
+        Err(e) => match e.kind() {
+            io::ErrorKind::NotFound => false,
+            _ => true
+        },
+        _ => true
+    }
+}
 
 // Window creators
 
@@ -49,6 +73,8 @@ fn create_control_bar_window() -> WINDOW {
     window
 }
 
+// Window drawers and helpers
+
 fn draw_control_bar(window: WINDOW) {
     // Draws control sequences
 
@@ -56,8 +82,83 @@ fn draw_control_bar(window: WINDOW) {
     let mut max_y = 0;
     getmaxyx(window, &mut max_y, &mut max_x);
 
-    mvwaddstr(window, 0, 0, &"\u{2593}".repeat(max_x as usize)).unwrap();
-    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit").unwrap();
+    //mvwaddstr(window, 0, 0, &"\u{2593}".repeat(max_x as usize)).unwrap();
+    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
+    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit\t\t[Ctrl-O]  Save").unwrap();
+}
+
+fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
+    // Runs the UI process of saving
+
+    let mut max_x = 0;
+    let mut max_y = 0;
+    getmaxyx(window, &mut max_y, &mut max_x);
+
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
+
+    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Enter]  Save\t\t[Ctrl-C]  Quit").unwrap();
+    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    mvwaddstr(window, 0, 0, "File Name to Write: ").unwrap();
+    waddstr(window, &path).unwrap();
+    wrefresh(window);
+
+    let left_limit = 20; // If cur_x == left_limit, prevent deletion
+    let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
+
+    let mut filename_len = path.len();
+
+    let mut ch;
+    loop {
+        ch = wget_wch(window);
+        getyx(window, &mut cur_y, &mut cur_x); // Get current cursor location
+        match ch {
+            Some(WchResult::Char(char_code)) => {
+                let c = char::from_u32(char_code as u32).expect("Invalid char");
+                match c {
+                    '\u{0003}' => {
+                        // Ctrl-C
+                        break;
+                    },
+                    '\u{007F}' => {
+                        // Backspace
+
+                        // Check if can't delete further
+                        if cur_x == left_limit {
+                            beep();
+                            continue;
+                        }
+
+                        // We are essentially replacing the characters with spaces
+                        wmove(window, cur_y, cur_x - 1);
+                        wdelch(window);
+                        winsch(window, ' ' as chtype);
+                        filename_len -= 1;
+                    },
+                    '\n' => {
+                        // Enter
+                    },
+                    _ => {
+                        if cur_x == right_limit {
+                            beep();
+                            continue;
+                        }
+
+                        waddch(window, c as chtype);
+                        filename_len += 1;
+                    }
+                }
+            },
+            _ => {break;}
+        }
+        wrefresh(window);
+    }
+    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
 }
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
@@ -67,6 +168,8 @@ fn refresh_all_windows(windows: &Vec<WINDOW>) {
     }
 }
 
+
+
 // Main loop
 
 fn main() {
@@ -74,7 +177,11 @@ fn main() {
     initscr();
     raw();
     noecho();
+
+    // Initialize Colors
+    use_default_colors();
     start_color();
+    init_pair(CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
 
     // Create windows
     let mut windows = Vec::new();
@@ -91,7 +198,14 @@ fn main() {
     }
 
     // Initialize editor
-    let mut editor = open_file(editor_window);
+    let args: Vec<_> = env::args().collect();
+    if args.len() != 2 {
+        panic!("Requires filepath argument");
+    }
+
+    let path = args[1].to_string();
+
+    let mut editor = open_file(editor_window, &path);
 
 
     draw_control_bar(ctrl_window);
@@ -133,7 +247,9 @@ fn main() {
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
-                        //editor.save_loop();
+                        save_loop(ctrl_window, &editor, &path);
+                        draw_control_bar(ctrl_window);
+                        wrefresh(ctrl_window);
                     },
                     _ => {
                         editor.type_character(c, false);
