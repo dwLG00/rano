@@ -423,6 +423,9 @@ impl Editor {
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
+        // Disable flag
+        self.smart_cursor = false;
+
         // handle frame and display cursors
         if let Some(text_line_index) = maybe_text_line_index {
             if line_pos == 0 && self.line_arena.get(text_line_index).len() != 0 {
@@ -468,6 +471,9 @@ impl Editor {
         let (height, width) = self.size;
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        // Disable flag
+        self.smart_cursor = false;
 
         if let Some(text_line_index) = maybe_text_line_index {
             if line_pos > 0 { // We are in the middle of a line
