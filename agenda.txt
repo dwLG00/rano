@@ -11,4 +11,3 @@
     - Add find and replace
 
 - Bug fix
-    - Hitting newline at end of file repeatedly doesn't scroll frame
