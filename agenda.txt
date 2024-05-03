@@ -2,7 +2,6 @@
     - Add Line::find() and LineArena::find() (recursively applies find() on each)
 
 - Work on basic editor functionality
-    - Add smart cursor pos (when hitting down repeatedly, cursor should "remember" its rough x coordinate)
     - Add selecting text
     - Add cut and copy
     - Add clipboard
