@@ -67,13 +67,13 @@ impl Editor {
 
         // Move to beginning if start_at_beginning == true
         if start_at_beginning {
-            mv(0, 0);
+            wmove(window, 0, 0);
         }
 
         // Display each line
         for line in buffer_slice.iter() {
             for ch in line.iter() {
-                addch(*ch as chtype);
+                waddch(window, *ch as chtype);
             }
             // At end of each Vec<char>, move cursor to the next line
             let mut cur_x = 0;
@@ -84,12 +84,12 @@ impl Editor {
                 // If cur_x ends up being 0 after printing a lot on screen, then
                 // it means the cursor wrapped around, so cur_y already got incremented
             } else {
-                mv(cur_y + 1, 0);
+                wmove(window, cur_y + 1, 0);
             }
         }
 
         if move_back {
-            mv(start_x, start_y);
+            wmove(window, start_x, start_y);
         }
     }
 
@@ -106,11 +106,11 @@ impl Editor {
         }
     }
 
-    pub fn move_cursor_to(&mut self) {
+    pub fn move_cursor_to(&mut self, window: WINDOW) {
         // Move cursor to cursor_display
 
         let (cur_y, cur_x) = self.cursor_display;
-        mv(cur_y as i32, cur_x as i32);
+        wmove(window, cur_y as i32, cur_x as i32);
     }
 
     pub fn scroll_down(&mut self, display_after: bool) {
@@ -452,7 +452,7 @@ impl Editor {
         }
     }
 
-    pub fn save_loop(&mut self) -> {
+    pub fn save_loop(&mut self) {
     }
 }
 
