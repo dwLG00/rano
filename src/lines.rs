@@ -301,7 +301,7 @@ impl LineArena {
         }
     }
 
-    pub fn split(&mut self, index: Index, split_point: usize) {
+    pub fn split(&mut self, index: Index, split_point: usize) -> Index {
         // Splits line into [..split_point] and [split_point..]
         // Mutates this Line into [..split_point], and returns Line
         // with [split_point..]
@@ -315,10 +315,10 @@ impl LineArena {
 
         if split_point == 0 && split_point != line_length {
             // Hit enter at beginning -> newline behind
-            self.add_empty_line_before(index);
+            self.add_empty_line_before(index)
         } else if split_point == line_length {
             // Hit enter at end -> newline in front
-            self.add_empty_line_after(index);
+            self.add_empty_line_after(index)
         } else {
             // Split off the extra, create new Line, insert after
             let current_height = arena[index].height(self.width);
@@ -327,7 +327,7 @@ impl LineArena {
             let line = Line::new_from(split_off);
             // Update line_count so that the adjusted line_count after insert_after() is correct
             self.line_count -= (current_height - new_height); // Guarantees (current - new) >= 0
-            self.insert_after(line, index);
+            self.insert_after(line, index)
         }
     }
 

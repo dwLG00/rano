@@ -134,6 +134,7 @@ impl Editor {
                     },
                     None => {
                         // We've reached the end of the text => don't change anything
+                        beep();
                         return
                     }
                 }
@@ -194,6 +195,7 @@ impl Editor {
                     },
                     None => {
                         // We've reached the end of the text => don't change anything
+                        beep();
                         return
                     }
                 }
@@ -251,6 +253,7 @@ impl Editor {
                     },
                     None => {
                         // We've reached the end of the text => don't change anything
+                        beep();
                         return
                     }
                 }
@@ -310,6 +313,7 @@ impl Editor {
                     },
                     None => {
                         // We've reached the beginning of the text => don't change anything
+                        beep();
                         return
                     }
                 }
@@ -376,6 +380,10 @@ impl Editor {
         // handle frame and display cursors
         if let Some(text_line_index) = maybe_text_line_index {
             if line_pos == 0 && self.line_arena.get(text_line_index).len() != 0 {
+                let is_head = match self.line_arena.get(text_line_index).prevline {
+                    None => true,
+                    _ => false
+                }; // If is_head, then we move the frame cursor back
                 let behind = self.line_arena.split(text_line_index, line_pos);
 
                 // Check if we need to shift frame down
@@ -390,6 +398,11 @@ impl Editor {
                         // Don't change the display cursor
                     }
                 } else {
+                    if is_head {
+                        if let Some(frame_line_index) = maybe_frame_line_index {
+                            self.cursor_frame = (self.line_arena.get(frame_line_index).prevline, 0);
+                        }
+                    }
                     self.cursor_display = (cur_y + 1, cur_x);
                 }
                 if display_after {
@@ -443,6 +456,7 @@ impl Editor {
                         }
                     },
                     None => { // We're at the very top of the file => do nothing
+                        return;
                     }
                 }
             }
