@@ -108,9 +108,11 @@ impl LineArena {
         arena[line].nextline = arena[index].nextline.take();
         arena[index].nextline = Some(line);
 
-        if let Some(line_index) = arena[line].nextline {
-            arena[line].prevline = arena[line_index].prevline.take();
-            arena[line_index].prevline = Some(line);
+        if let Some(nextline_index) = arena[line].nextline {
+            arena[line].prevline = arena[nextline_index].prevline.take();
+            arena[nextline_index].prevline = Some(line);
+        } else {
+            arena[line].prevline = Some(index);
         }
 
         // Update line_count and length

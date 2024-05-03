@@ -261,7 +261,7 @@ impl Editor {
         }
 
         // Update cursor_display and cursor_frame
-        if next_line_flag && cur_y + 1 == height {
+        if (next_line_flag || cur_x + 1 == width) && cur_y + 1 == height {
             // Can't scroll past
             if let Some(frame_line_index) = maybe_frame_line_index {
                 if line_height + 1 == self.line_arena.get(frame_line_index).height(width) {
