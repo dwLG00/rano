@@ -201,13 +201,23 @@ fn main() {
 
     // Initialize editor
     let args: Vec<_> = env::args().collect();
+    let mut path;
+    let mut editor;
+    /*
     if args.len() != 2 {
         panic!("Requires filepath argument");
     }
+    */
+    if args.len() == 1 {
+        path = String::new();
+        editor = nc::Editor::blank(editor_window);
+    } else if args.len() == 2 {
+        path = args[1].to_string();
+        editor = open_file(editor_window, &path);
+    } else {
+        panic!("More than 1 argument provided!");
+    }
 
-    let path = args[1].to_string();
-
-    let mut editor = open_file(editor_window, &path);
 
 
     draw_control_bar(ctrl_window);

@@ -34,6 +34,13 @@ impl Editor {
         Editor::from_line_arena(lines::LineArena::new(width), window)
     }
 
+    pub fn blank(window: WINDOW) -> Editor {
+        let (_, width) = get_window_dimensions(window);
+        let mut line_arena = lines::LineArena::new(width);
+        line_arena.append(lines::Line::new());
+        Editor::from_line_arena(line_arena, window)
+    }
+
     pub fn from_file(file: fs::File, window: WINDOW) -> Editor {
         // New Editor instance from a file
 
