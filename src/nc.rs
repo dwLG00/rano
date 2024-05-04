@@ -34,7 +34,9 @@ pub struct Editor {
     lmark_pos: TextCursor,
     rmark_pos: TextCursor,
     // Cut/Copy stuff
-    cut_buffer: Vec<char>
+    cut_buffer: Vec<char>,
+    // Save flag
+    save_flag: bool
 }
 
 impl Editor {
@@ -77,7 +79,8 @@ impl Editor {
             select_mode_flag: false,
             lmark_pos: (None, 0),
             rmark_pos: (None, 0),
-            cut_buffer: Vec::new()
+            cut_buffer: Vec::new(),
+            save_flag: true
         }
     }
 
@@ -435,6 +438,7 @@ impl Editor {
         // Move the cursor right
         self.scroll_right(display_after);
 
+        self.save_flag = false;
     }
 
     pub fn newline(&mut self, display_after: bool) {
@@ -483,6 +487,8 @@ impl Editor {
                 self.scroll_right(display_after);
             }
         }
+
+        self.save_flag = false;
     }
 
     pub fn backspace(&mut self, display_after: bool) {
@@ -537,6 +543,8 @@ impl Editor {
         if display_after {
             self.display_at_frame_cursor();
         }
+
+        self.save_flag = false;
     }
 
     pub fn cut_line(&mut self) {
@@ -562,6 +570,8 @@ impl Editor {
             let (cur_y, cur_x) = self.cursor_display;
             self.cursor_display = (cur_y, 0);
         }
+
+        self.save_flag = false;
     }
 
     pub fn paste(&mut self) {
@@ -618,6 +628,8 @@ impl Editor {
             // Adjust display cursor
             self.set_display_cursor_from_frame_text_cursor();
         }
+
+        self.save_flag = false;
     }
 
     pub fn set_display_cursor_from_frame_text_cursor(&mut self) -> bool {
@@ -687,6 +699,10 @@ impl Editor {
     pub fn export(&self) -> String {
         // Returns the contents as string
         self.line_arena.export()
+    }
+
+    pub fn set_save(&mut self) {
+        self.save_flag = true;
     }
 }
 
