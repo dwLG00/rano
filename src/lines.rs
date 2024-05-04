@@ -84,7 +84,7 @@ impl LineArena {
         // Inserts line at given absolute index
         // e.g. [1, 2, 4].insert(3, 2) => [1, 2, 3, 4]
 
-        if idx > self.length || idx < 0 {
+        if idx > self.length {
             panic!();
         }
 
@@ -201,7 +201,7 @@ impl LineArena {
     pub fn seek(&mut self, idx: usize) -> Index {
         // Retrieves index of line at idx
 
-        if idx < 0 || idx >= self.length {
+        if idx >= self.length {
             panic!("idx out of range");
         }
 
@@ -235,7 +235,7 @@ impl LineArena {
     pub fn get_idx(&mut self, idx: usize) -> Option<&Line> {
         // Get reference to line at index
 
-        if idx < 0 || idx >= self.length {
+        if idx >= self.length {
             panic!();
         }
 
@@ -284,7 +284,7 @@ impl LineArena {
             return None;
         }
 
-        if idx < 0 || idx >= self.length {
+        if idx >= self.length {
             panic!();
         }
 
@@ -338,7 +338,7 @@ impl LineArena {
         let arena = &mut self.arena;
         let line_length = arena[index].len();
 
-        if split_point < 0 || split_point > line_length {
+        if split_point > line_length {
             panic!("split_point index out of range");
         }
 
@@ -355,7 +355,7 @@ impl LineArena {
             let new_height = arena[index].height(self.width);
             let line = Line::new_from(split_off);
             // Update line_count so that the adjusted line_count after insert_after() is correct
-            self.line_count -= (current_height - new_height); // Guarantees (current - new) >= 0
+            self.line_count -= current_height - new_height; // Guarantees (current - new) >= 0
             self.insert_after(line, index)
         }
     }
