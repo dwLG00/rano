@@ -24,8 +24,10 @@ pub struct Editor {
     cursor_frame: FrameCursor,
     size: WindowYX,
     window: WINDOW,
-    smart_cursor: bool, // smart cursor flag
-    smart_cursor_pos: usize
+    smart_cursor_flag: bool, // smart cursor flag
+    smart_cursor_pos: usize,
+    select_mode_flag: bool,
+    lmark_pos: TextCursor
 }
 
 impl Editor {
@@ -63,8 +65,10 @@ impl Editor {
             cursor_frame: (head, 0),
             size: size,
             window: window,
-            smart_cursor: false,
-            smart_cursor_pos: 0
+            smart_cursor_flag: false,
+            smart_cursor_pos: 0,
+            select_mode_flag: false,
+            lmark_pos: (None, 0)
         }
     }
 
@@ -82,7 +86,7 @@ impl Editor {
         }
 
         // Display each line
-        for line in buffer_slice.iter() {
+        for line in buffer_slice.iter() { 
             for ch in line.iter() {
                 waddch(window, *ch as chtype);
             }
@@ -117,6 +121,28 @@ impl Editor {
         }
     }
 
+    pub fn deselect_all(&mut self) {
+        // Deselects all Lines, starting from lmark_pos
+
+        if !self.select_mode_flag { return; }
+
+        let (maybe_lmark_index, _) = self.lmark_pos;
+
+        // Iteratively deselect each line
+        let mut pointer = maybe_lmark_index;
+        while let Some(ptr_index) = pointer {
+            if self.line_arena.get(ptr_index).is_selected() {
+                self.line_arena.get_mut(ptr_index).deselect();
+                pointer = self.line_arena.get(ptr_index).nextline;
+            } else {
+                break;
+            }
+        }
+
+        // Disable the select mode flag
+        self.select_mode_flag = false;
+    }
+
     pub fn move_cursor_to(&mut self, window: WINDOW) {
         // Move cursor to cursor_display
 
@@ -144,8 +170,8 @@ impl Editor {
                         next_display_cursor = min(self.line_arena.get(next_index).len(), cur_x);
                         nextline_len = min(self.line_arena.get(next_index).len(), width - 1);
                         // If smart cursor flag isn't set, then set it and store current x pos
-                        if !self.smart_cursor {
-                            self.smart_cursor = true;
+                        if !self.smart_cursor_flag {
+                            self.smart_cursor_flag = true;
                             self.smart_cursor_pos = cur_x;
                         }
                         self.cursor_text = (Some(next_index), next_display_cursor);
@@ -163,7 +189,7 @@ impl Editor {
         }
 
         let mut next_display_pos;
-        if self.smart_cursor {
+        if self.smart_cursor_flag {
             next_display_pos = min(max(next_display_cursor, self.smart_cursor_pos), nextline_len);
         } else{
             next_display_pos = next_display_cursor;
@@ -215,8 +241,8 @@ impl Editor {
                         prevline_len = min(self.line_arena.get(prev_index).len(), width - 1);
 
                         // If smart cursor flag isn't set, then set it and store current x pos
-                        if !self.smart_cursor {
-                            self.smart_cursor = true;
+                        if !self.smart_cursor_flag {
+                            self.smart_cursor_flag = true;
                             self.smart_cursor_pos = cur_x;
                         }
 
@@ -239,7 +265,7 @@ impl Editor {
         }
 
         let mut next_display_pos;
-        if self.smart_cursor {
+        if self.smart_cursor_flag {
             next_display_pos = min(max(next_display_cursor, self.smart_cursor_pos), prevline_len);
         } else{
             next_display_pos = next_display_cursor;
@@ -284,7 +310,7 @@ impl Editor {
         let mut next_line_flag = false;
 
         // Disable flag
-        self.smart_cursor = false;
+        self.smart_cursor_flag = false;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -343,7 +369,7 @@ impl Editor {
         let mut next_display_cursor = 0;
 
         // Disable flag
-        self.smart_cursor = false;
+        self.smart_cursor_flag = false;
 
         // Update cursor_text
         if let Some(line_index) = maybe_text_line_index {
@@ -424,7 +450,7 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         // Disable flag
-        self.smart_cursor = false;
+        self.smart_cursor_flag = false;
 
         // handle frame and display cursors
         if let Some(text_line_index) = maybe_text_line_index {
@@ -473,7 +499,7 @@ impl Editor {
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
         // Disable flag
-        self.smart_cursor = false;
+        self.smart_cursor_flag = false;
 
         if let Some(text_line_index) = maybe_text_line_index {
             if line_pos > 0 { // We are in the middle of a line
