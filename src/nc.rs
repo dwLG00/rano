@@ -36,7 +36,7 @@ pub struct Editor {
     // Cut/Copy stuff
     cut_buffer: Vec<char>,
     // Save flag
-    save_flag: bool
+    pub save_flag: bool
 }
 
 impl Editor {

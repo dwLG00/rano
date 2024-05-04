@@ -86,7 +86,9 @@ fn draw_control_bar(window: WINDOW) {
     wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
     wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
-    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit\t\t[Ctrl-O]  Save\t\t[Ctrl-K]  Cut").unwrap();
+    let ctrl_string = "HELP =>\t[Ctrl-X]  Quit\t[Ctrl-O]  Save\t[Ctrl-K]  Cut".to_string();
+    let ctrl_string_len = ctrl_string.len();
+    mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
 
 fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
@@ -101,13 +103,18 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
 
-    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Enter]  Save\t\t[Ctrl-C]  Quit").unwrap();
+    let ctrl_string = "Optn =>\t[Enter]  Save\t[Ctrl-C]  Quit".to_string();
+    let ctrl_string_len = ctrl_string.len();
+    let file_input_string = "File Name to Write: ".to_string();
+    let file_input_string_len = file_input_string.len();
+    mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
     wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
-    mvwaddstr(window, 0, 0, "File Name to Write: ").unwrap();
+    mvwaddstr(window, 0, 0, &(file_input_string + &" ".repeat(max_x as usize - file_input_string_len))).unwrap();
+    wmove(window, 0, file_input_string_len as i32);
     waddstr(window, &path).unwrap();
     wrefresh(window);
 
-    let left_limit = 20; // If cur_x == left_limit, prevent deletion
+    let left_limit = file_input_string_len as i32; // If cur_x == left_limit, prevent deletion
     let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
 
     let mut filename_buffer = path.clone();
@@ -161,6 +168,58 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
     }
     wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+}
+
+fn exit_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool {
+    // Handle UI sequence for exiting when you haven't saved
+
+    let mut max_x = 0;
+    let mut max_y = 0;
+    getmaxyx(window, &mut max_y, &mut max_x);
+
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
+
+    let ctrl_string = "Optn =>\t[Y]  Yes\t[N]  No\t[Ctrl-C]  Cancel".to_string();
+    let ctrl_string_len = ctrl_string.len();
+    let buffer_query_string = "Save modified buffer?".to_string();
+    let buffer_query_string_len = buffer_query_string.len();
+    mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
+    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    mvwaddstr(window, 0, 0, &(buffer_query_string + &" ".repeat(max_x as usize - buffer_query_string_len))).unwrap();
+    wmove(window, 0, buffer_query_string_len as i32 + 1);
+    wrefresh(window);
+
+
+    let mut ch = wget_wch(window);
+    loop {
+        match ch {
+            Some(WchResult::Char(char_code)) => {
+                let c = char::from_u32(char_code as u32).expect("Invalid character");
+                match c {
+                    'y' => {
+                        save_loop(window, editor, path);
+                        return true;
+                    },
+                    'n' => {
+                        return true;
+                    },
+                    '\u{0003}' => {
+                        return false;
+                    },
+                    _ => {
+                        beep();
+                    },
+                }
+            },
+            _ => {
+                beep();
+            }
+        }
+        ch = wget_wch(window);
+    }
 }
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
@@ -255,7 +314,14 @@ fn main() {
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break
-                        break;
+                        if editor.save_flag {
+                            break;
+                        } else if exit_loop(ctrl_window, &editor, &path) {
+                            break;
+                        } else {
+                            draw_control_bar(ctrl_window);
+                            wrefresh(ctrl_window);
+                        }
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
