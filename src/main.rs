@@ -86,7 +86,7 @@ fn draw_control_bar(window: WINDOW) {
     wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
     wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
-    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit\t\t[Ctrl-O]  Save").unwrap();
+    mvwaddstr(window, 1, 0, "HELP =>\t\t\t[Ctrl-X]  Quit\t\t[Ctrl-O]  Save\t\t[Ctrl-K]  Cut").unwrap();
 }
 
 fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
