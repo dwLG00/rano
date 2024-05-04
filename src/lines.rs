@@ -454,6 +454,11 @@ impl Line {
         self.content.remove(pos)
     }
 
+    pub fn split_off(&mut self, pos: usize) -> Vec<char> {
+        // Calls split_off on own content
+        self.content.split_off(pos)
+    }
+
     pub fn extend(&mut self, target: &Vec<char>) {
         // Merges target content into own content
         self.content.extend(target);

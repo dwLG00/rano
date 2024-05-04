@@ -32,7 +32,9 @@ pub struct Editor {
     // Select mode fields
     select_mode_flag: bool,
     lmark_pos: TextCursor,
-    rmark_pos: TextCursor
+    rmark_pos: TextCursor,
+    // Cut/Copy stuff
+    cut_buffer: Vec<char>
 }
 
 impl Editor {
@@ -74,7 +76,8 @@ impl Editor {
             smart_cursor_pos: 0,
             select_mode_flag: false,
             lmark_pos: (None, 0),
-            rmark_pos: (None, 0)
+            rmark_pos: (None, 0),
+            cut_buffer: Vec::new()
         }
     }
 
@@ -533,6 +536,59 @@ impl Editor {
         }
         if display_after {
             self.display_at_frame_cursor();
+        }
+    }
+
+    pub fn cut_line(&mut self) {
+        // Cuts the portion of text at text cursor afterwards
+
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        // Cut out Line and add to cut buffer
+        if let Some(text_line_index) = maybe_text_line_index {
+            if line_pos > 0 { // Don't cut the entire line, just take the portion starting at line_pos
+                self.cut_buffer = self.line_arena.get_mut(text_line_index).split_off(line_pos);
+            } else {
+                // Cut the entire line out
+                let nextline = self.line_arena.get(text_line_index).nextline;
+                self.line_arena.pop_index(text_line_index);
+                self.cut_buffer = self.line_arena.get_mut(text_line_index).split_off(0);
+                // If frame cursor is text cursor, then set frame cursor to the next line
+                if let Some(frame_line_index) = maybe_text_line_index {
+                    if frame_line_index == text_line_index {
+                        self.cursor_frame = (nextline, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    fn at_top(&self) -> bool {
+        // Returns true if frame cursor is the top line, else false
+
+        let (maybe_frame_line_index, line_height) = self.cursor_frame;
+        if let Some(frame_line_index) = maybe_frame_line_index {
+            (line_height == 0) && match self.line_arena.get(frame_line_index).prevline {
+                Some(_) => false,
+                None => true
+            }
+        } else {
+            false
+        }
+    }
+
+    fn at_beginning(&self) -> bool {
+        // Returns true if cursor is at the very beginning
+
+        let (maybe_text_line_index, line_pos) = self.cursor_text;
+        if let Some(text_line_index) = maybe_text_line_index {
+            (line_pos == 0) && match self.line_arena.get(text_line_index).prevline {
+                Some(_) => false,
+                None => true
+            }
+        } else {
+            false
         }
     }
 
