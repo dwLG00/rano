@@ -110,10 +110,11 @@ impl LineArena {
             if *ch == '\n' { // New line
                 let new_line = Line::new();
                 let new_line = arena.insert(new_line);
+                self.line_count += arena[end].height(self.width);
                 arena[new_line].prevline = Some(end);
                 arena[end].nextline = Some(new_line);
                 end = new_line;
-                self.length += 1;                
+                self.length += 1;
             } else {
                 arena[end].push_char(*ch);
             }
