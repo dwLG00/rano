@@ -105,6 +105,8 @@ impl LineArena {
         let line = Line::new();
         let start = arena.insert(line);
         let mut end = start;
+        self.length += 1;
+
 
         for ch in buffer.iter() {
             if *ch == '\n' { // New line
@@ -119,6 +121,9 @@ impl LineArena {
                 arena[end].push_char(*ch);
             }
         }
+
+        self.line_count += arena[end].height(self.width);
+
         (start, end)
     }
 
