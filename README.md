@@ -5,9 +5,10 @@ rano is a tiny text editor inspired by nano and written in rust.
 ## Features
 - Scrolling
 - Saving files
+- Cutting lines
 
 ## Anticipated features
-- Cut, Copy and Paste
+- Copy and Paste
 - Clipboards
 - Line numbers
 - Undo/Redo

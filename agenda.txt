@@ -1,6 +1,3 @@
-- lines.rs
-    - Add Line::find() and LineArena::find() (recursively applies find() on each)
-
 - Work on basic editor functionality
     - Add selecting text
     - Add cut and copy
