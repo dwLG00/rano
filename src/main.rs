@@ -263,6 +263,14 @@ fn main() {
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
                     },
+                    '\u{000B}' => {
+                        // Ctrl-K -> cut
+                        editor.cut_line();
+                    },
+                    '\u{0015}' => {
+                        // Ctrl-U -> paste
+                        //editor.paste();
+                    },
                     _ => {
                         editor.type_character(c, false);
                     }

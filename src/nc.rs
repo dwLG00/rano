@@ -553,11 +553,14 @@ impl Editor {
             self.cut_buffer = self.line_arena.get_mut(text_line_index).split_off(0);
             self.cut_buffer.push('\n');
             // If frame cursor is text cursor, then set frame cursor to the next line
-            if let Some(frame_line_index) = maybe_text_line_index {
+            if let Some(frame_line_index) = maybe_frame_line_index {
                 if frame_line_index == text_line_index {
                     self.cursor_frame = (nextline, 0);
                 }
             }
+            self.cursor_text = (nextline, 0);
+            let (cur_y, cur_x) = self.cursor_display;
+            self.cursor_display = (cur_y, 0);
         }
     }
 
@@ -595,7 +598,21 @@ impl Editor {
             self.line_arena.merge(before);
             self.line_arena.merge(paste_end);
             // Now only before and paste_end are valid indices
+
+            // Adjust frame cursor
+            if let Some(frame_line_index) = maybe_frame_line_index {
+                if text_line_index == frame_line_index {
+                    self.cursor_frame = (Some(before), line_pos);
+                }
+            }
+
+            // Adjust text cursor
+            //self.set_display_cursor_from_frame_text_cursor();
         }
+    }
+
+    pub fn set_display_cursor_from_frame_text_cursor(&mut self) {
+        // Uses frame and text cursor to move the display_cursor
     }
 
     fn at_top(&self) -> bool {
