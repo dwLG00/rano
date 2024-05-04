@@ -19,15 +19,20 @@ type BufferSlice<'a> = &'a [Vec<char>];
 
 pub struct Editor {
     line_arena: lines::LineArena,
+    // Cursors
     cursor_text: TextCursor,
     cursor_display: WindowYX,
     cursor_frame: FrameCursor,
+    // Basic editor fields
     size: WindowYX,
     window: WINDOW,
-    smart_cursor_flag: bool, // smart cursor flag
+    // Smart cursor fields
+    smart_cursor_flag: bool,
     smart_cursor_pos: usize,
+    // Select mode fields
     select_mode_flag: bool,
-    lmark_pos: TextCursor
+    lmark_pos: TextCursor,
+    rmark_pos: TextCursor
 }
 
 impl Editor {
@@ -68,7 +73,8 @@ impl Editor {
             smart_cursor_flag: false,
             smart_cursor_pos: 0,
             select_mode_flag: false,
-            lmark_pos: (None, 0)
+            lmark_pos: (None, 0),
+            rmark_pos: (None, 0)
         }
     }
 
@@ -122,25 +128,11 @@ impl Editor {
     }
 
     pub fn deselect_all(&mut self) {
-        // Deselects all Lines, starting from lmark_pos
+        // Sets select_mode_flag to false, and sets all marks to default
 
-        if !self.select_mode_flag { return; }
-
-        let (maybe_lmark_index, _) = self.lmark_pos;
-
-        // Iteratively deselect each line
-        let mut pointer = maybe_lmark_index;
-        while let Some(ptr_index) = pointer {
-            if self.line_arena.get(ptr_index).is_selected() {
-                self.line_arena.get_mut(ptr_index).deselect();
-                pointer = self.line_arena.get(ptr_index).nextline;
-            } else {
-                break;
-            }
-        }
-
-        // Disable the select mode flag
         self.select_mode_flag = false;
+        self.lmark_pos = (None, 0);
+        self.rmark_pos = (None, 0);
     }
 
     pub fn move_cursor_to(&mut self, window: WINDOW) {

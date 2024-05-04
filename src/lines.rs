@@ -428,26 +428,16 @@ impl LineArena {
 pub struct Line {
     pub prevline: Option<Index>,
     pub nextline: Option<Index>,
-    selected: bool,
-    selected_bounds: (usize, usize),
     content: Vec<char>
 }
 
 impl Line {
     pub fn new() -> Line {
-        Line {
-            prevline: None, nextline: None,
-            selected: false, selected_bounds: (0, 0),
-            content: Vec::new()
-        }
+        Line { prevline: None, nextline: None, content: Vec::new() }
     }
 
     pub fn new_from(content: Vec<char>) -> Line {
-        Line {
-            prevline: None, nextline: None,
-            selected: false, selected_bounds: (0, 0),
-            content: content
-        }
+        Line { prevline: None, nextline: None, content: content }
     }
 
     pub fn push_char(&mut self, character: char) {
@@ -484,35 +474,8 @@ impl Line {
         self.content.len() - (self.content.len() / width) * width
     }
 
-    pub fn is_selected(&self) -> bool {
-        // Getter
-        self.selected
-    }
-
-    pub fn select(&mut self) {
-        // Set the entire Line as selected
-        self.selected = true;
-        self.selected_bounds = (0, self.content.len());
-    }
-
-    pub fn select_bound(&mut self, start: usize, end: usize) {
-        self.selected = true;
-        self.selected_bounds = (start, end);
-    }
-
-    pub fn deselect(&mut self) {
-        self.selected = false;
-    }
-
     pub fn to_string(&self) -> String {
         String::from_iter(&self.content)
-    }
-
-    pub fn to_string_selected(&self) -> String {
-        // Return the selected region as a string
-
-        let (start, end) = self.selected_bounds;
-        String::from_iter(&self.content[start..end])
     }
 
     pub fn get_lines(&mut self, width: usize) -> Vec<Vec<char>> {
