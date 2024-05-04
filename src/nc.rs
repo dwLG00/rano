@@ -574,21 +574,20 @@ impl Editor {
         self.save_flag = false;
     }
 
-    pub fn paste(&mut self) {
-        // Pastes cutbuffer at current position
+    pub fn insert_buffer(&mut self, buffer: Vec<char>) {
+        // Inserts a buffer at current position
 
         let (cur_y, cur_x) = self.cursor_display; // Display cursor position
         let (height, width) = self.size;
         let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
         let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
 
-        if self.cut_buffer.len() == 0 { // Cut buffer is empty -> do nothing
-            beep();
-            return;
+        if buffer.len() == 0 {
+            return; // Do nothing
         }
 
         // Paste in the content
-        let (paste_start, paste_end) = self.line_arena.insert_block(self.cut_buffer.clone());
+        let (paste_start, paste_end) = self.line_arena.insert_block(buffer);
         if let Some(text_line_index) = maybe_text_line_index {
             // Depending on whether the line is empty/line_pos is 0, the order of the index changes
             let mut before: Index;
@@ -630,6 +629,13 @@ impl Editor {
         }
 
         self.save_flag = false;
+
+    }
+
+    pub fn paste(&mut self) {
+        // Pastes cutbuffer at current position
+
+        self.insert_buffer(self.cut_buffer.clone());
     }
 
     pub fn set_display_cursor_from_frame_text_cursor(&mut self) -> bool {
