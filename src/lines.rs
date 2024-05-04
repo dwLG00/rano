@@ -32,7 +32,7 @@ impl LineArena {
         let mut pointer = head;
         let mut length = 1;
 
-        // Read file all into a buffer
+        // Read filee all into a buffer
         let mut buffer = String::new();
         file.read_to_string(&mut buffer);
 
@@ -96,6 +96,29 @@ impl LineArena {
             let ptr_index = self.seek(idx - 1);
             self.insert_after(line, ptr_index)
         }
+    }
+
+    pub fn insert_block(&mut self, buffer: Vec<char>) -> (Index, Index) {
+        // Inserts a whole buffer into line arena, and returns the first and last index
+        let arena = &mut self.arena;
+
+        let line = Line::new();
+        let start = arena.insert(line);
+        let mut end = start;
+
+        for ch in buffer.iter() {
+            if *ch == '\n' { // New line
+                let new_line = Line::new();
+                let new_line = arena.insert(new_line);
+                arena[new_line].prevline = Some(end);
+                arena[end].nextline = Some(new_line);
+                end = new_line;
+                self.length += 1;                
+            } else {
+                arena[end].push_char(*ch);
+            }
+        }
+        (start, end)
     }
 
     pub fn insert_after(&mut self, line: Line, index: Index) -> Index {

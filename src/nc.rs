@@ -561,6 +561,22 @@ impl Editor {
         }
     }
 
+    pub fn paste(&mut self) {
+        // Pastes cutbuffer at current position
+
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        if self.cut_buffer.len() == 0 { // Cut buffer is empty -> do nothing
+            beep();
+            return;
+        }
+
+        // Paste in the content
+    }
+
     fn at_top(&self) -> bool {
         // Returns true if frame cursor is the top line, else false
 
