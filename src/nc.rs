@@ -590,6 +590,12 @@ impl Editor {
                 before = text_line_index;
                 after = self.line_arena.split(before, line_pos);
             }
+            // Get paste_end.len() to find 
+            let mut new_line_pos: usize = self.line_arena.get(paste_end).len();
+            if paste_end == paste_start { // We've pasted text with no newlines
+                new_line_pos += self.line_arena.get(before).len();
+            }
+
             // Merge the start and end lines of the pasted block into the split lines
             self.line_arena.link(before, paste_start);
             self.line_arena.link(paste_end, after);
@@ -607,12 +613,47 @@ impl Editor {
             }
 
             // Adjust text cursor
-            //self.set_display_cursor_from_frame_text_cursor();
+            self.cursor_text = (Some(paste_end), new_line_pos);
+
+            // Adjust display cursor
+            self.set_display_cursor_from_frame_text_cursor();
         }
     }
 
-    pub fn set_display_cursor_from_frame_text_cursor(&mut self) {
+    pub fn set_display_cursor_from_frame_text_cursor(&mut self) -> bool {
         // Uses frame and text cursor to move the display_cursor
+        // Returns true if new display cursor position is moved, false
+        // if the display cursor is outside the display window
+        let (cur_y, cur_x) = self.cursor_display; // Display cursor position
+        let (height, width) = self.size;
+        let (maybe_frame_line_index, line_height) = self.cursor_frame; // Line and display line at top of window
+        let (maybe_text_line_index, line_pos) = self.cursor_text; // Line and position of cursor (internal representation)
+
+        let line_pos_y = line_pos / width;
+
+        let mut pos_y = 0;
+        let mut pos_x = line_pos - line_pos_y * width;
+
+        let mut pointer = maybe_frame_line_index;
+        if let Some(text_line_index) = maybe_text_line_index {
+            while let Some(ptr_index) = pointer {
+                if text_line_index == ptr_index {
+                    // The frame is the text index
+                    pos_y += line_pos_y - line_height;
+                    break;
+                } else {
+                    pos_y += self.line_arena.get(ptr_index).height(width) - line_height;
+                    pointer = self.line_arena.get(ptr_index).nextline;
+                }
+            }
+        }
+
+        if pos_y < height && pos_x < width {
+            self.cursor_display = (pos_y, pos_x);
+            true
+        } else {
+            false
+        }
     }
 
     fn at_top(&self) -> bool {

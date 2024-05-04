@@ -269,7 +269,7 @@ fn main() {
                     },
                     '\u{0015}' => {
                         // Ctrl-U -> paste
-                        //editor.paste();
+                        editor.paste();
                     },
                     _ => {
                         editor.type_character(c, false);
