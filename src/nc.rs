@@ -575,6 +575,27 @@ impl Editor {
         }
 
         // Paste in the content
+        let (paste_start, paste_end) = self.line_arena.insert_block(self.cut_buffer.clone());
+        if let Some(text_line_index) = maybe_text_line_index {
+            // Depending on whether the line is empty/line_pos is 0, the order of the index changes
+            let mut before: Index;
+            let mut after: Index;
+            if line_pos == 0 && !self.line_arena.get(text_line_index).is_empty() {
+                before = self.line_arena.split(text_line_index, line_pos);
+                after = text_line_index;
+            } else {
+                before = text_line_index;
+                after = self.line_arena.split(before, line_pos);
+            }
+            // Merge the start and end lines of the pasted block into the split lines
+            self.line_arena.link(before, paste_start);
+            self.line_arena.link(paste_end, after);
+            // At this point, before <-> paste_start ... paste_end <-> after
+            // Merge the Lines
+            self.line_arena.merge(before);
+            self.line_arena.merge(paste_end);
+            // Now only before and paste_end are valid indices
+        }
     }
 
     fn at_top(&self) -> bool {

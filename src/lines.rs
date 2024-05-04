@@ -356,7 +356,7 @@ impl LineArena {
 
     pub fn merge(&mut self, index: Index) {
         // Merges Line at index with Line after it.
-        // Does nothing if nexline is None
+        // Does nothing if nextline is None
 
         let arena = &mut self.arena;
         if let Some(nextline) = arena[index].nextline {
@@ -367,6 +367,16 @@ impl LineArena {
             arena[index].extend(&content);
             self.pop_index(nextline);
         }
+    }
+
+    pub fn link(&mut self, left_index: Index, right_index: Index) {
+        // Link the left and right indices
+        // IMPORTANT: this breaks left_index.nextline and right_index.prevline links!
+
+        let arena = &mut self.arena;
+
+        arena[left_index].nextline = Some(right_index);
+        arena[right_index].prevline = Some(left_index);
     }
 
     pub fn len(&self) -> usize {
@@ -495,6 +505,10 @@ impl Line {
     pub fn len(&self) -> usize {
         // Get length of self.content
         self.content.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.content.len() == 0
     }
 
     pub fn tail_len(&self, width: usize) -> usize {
