@@ -9,6 +9,7 @@ use std::path::Path;
 mod lines;
 mod nc;
 
+// Colors
 static CP_HIGHLIGHT: i16 = 1;
 
 // File IO
@@ -337,6 +338,9 @@ fn main() {
                         // Ctrl-U -> paste
                         editor.paste();
                     },
+                    '\u{0001}'..='\u{001F}' => { // All other control keys
+                        beep();
+                    }
                     _ => {
                         editor.type_character(c, false);
                     }
