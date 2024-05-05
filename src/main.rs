@@ -208,8 +208,8 @@ fn exit_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool {
                 let c = char::from_u32(char_code as u32).expect("Invalid character");
                 match c {
                     'y' => {
-                        save_loop(window, editor, path);
-                        return true;
+                        wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+                        return save_loop(window, editor, path); // Cancel the exit if the save is also cancelled
                     },
                     'n' => {
                         return true;
