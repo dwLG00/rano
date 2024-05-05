@@ -92,8 +92,9 @@ fn draw_control_bar(window: WINDOW) {
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
 
-fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
+fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool{
     // Runs the UI process of saving
+    // Returns true if actually saved
 
     let mut max_x = 0;
     let mut max_y = 0;
@@ -121,6 +122,7 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
     let mut filename_buffer = path.clone();
 
     let mut ch;
+    let mut ret: bool = false;
     loop {
         ch = wget_wch(window);
         getyx(window, &mut cur_y, &mut cur_x); // Get current cursor location
@@ -150,7 +152,11 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
                     '\n' => {
                         // Enter
                         save_to_file(filename_buffer, editor);
+                        ret = true;
                         break;
+                    },
+                    '\u{0001}'..='\u{001F}' => {
+                        beep();
                     },
                     _ => {
                         if cur_x == right_limit {
@@ -169,6 +175,7 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) {
     }
     wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+    ret
 }
 
 fn exit_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool {
@@ -326,7 +333,9 @@ fn main() {
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
-                        save_loop(ctrl_window, &editor, &path);
+                        if save_loop(ctrl_window, &editor, &path) {
+                            editor.set_save();
+                        }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
                     },
