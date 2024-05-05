@@ -555,6 +555,13 @@ impl Editor {
 
         // Cut out Line and add to cut buffer
         if let Some(text_line_index) = maybe_text_line_index {
+            if self.line_arena.get(text_line_index).len() == 0 {
+                if self.line_arena.get(text_line_index).nextline == None {
+                    beep();
+                    return;
+                }
+            }
+
             // Cut the entire line out
             let nextline = self.line_arena.get(text_line_index).nextline;
             self.line_arena.pop_index(text_line_index);
