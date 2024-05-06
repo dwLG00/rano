@@ -17,6 +17,24 @@ type WindowYX = (usize, usize);
 type Buffer = Vec<Vec<char>>;
 type BufferSlice<'a> = &'a [Vec<char>];
 
+pub struct GapEditor {
+    gap_buffer: lines::GapBuffer,
+    cursor_display: WindowYX,
+    cursor_text: usize
+}
+
+impl GapEditor {
+    pub fn new(width: usize) -> GapEditor {
+        // New, empty gap editor
+        GapEditor { gap_buffer: lines::GapBuffer::new(width), cursor_display: (0, 0), cursor_text: 0 }
+    }
+
+    pub fn new_from_file(mut file: fs::File, width: usize) -> GapEditor {
+        GapEditor { gap_buffer: lines::GapBuffer::new_from_file(width, file), cursor_display: (0, 0), cursor_text: 0 }
+    }
+}
+
+
 pub struct Editor {
     line_arena: lines::LineArena,
     // Cursors

@@ -11,7 +11,7 @@ pub struct GapBuffer {
     gap_before: VecDeque<String>,
     gap_after: VecDeque<String>,
     buffer: String,
-    width: usize
+    pub width: usize
 }
 
 impl GapBuffer {
@@ -151,6 +151,19 @@ impl GapBuffer {
             buffer.push((&line[i*width..(i+1)*width]).to_string());
         }
         buffer.push((&line[(height-1)*width..]).to_string());
+        buffer
+    }
+
+    pub fn export(&mut self) -> String {
+        // export entire gap buffer as a single string
+        let mut buffer = String::new();
+        for string in self.gap_before.iter() {
+            buffer.push_str(&string);
+        }
+        buffer.push_str(&self.buffer);
+        for string in self.gap_after.iter() {
+            buffer.push_str(&string);
+        }
         buffer
     }
 }
