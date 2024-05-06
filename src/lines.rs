@@ -5,6 +5,37 @@ use std::fs;
 use std::io::Read;
 use std::cmp::{min, max};
 
+pub struct GapBuffer {
+    gap_before: Vec<String>,
+    gap_after: Vec<String>
+}
+
+impl GapBuffer {
+    pub fn new() -> GapBuffer {
+        GapBuffer { gap_before: Vec::<String>::new(), gap_after: Vec::<String>::new() }
+    }
+
+    pub fn new_from_file(mut file: fs::File) -> GapBuffer {
+        // Construct new gap buffer filled with file. Set initial pointer at head.
+        let mut gap_after = Vec::<String>::new();
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer);
+
+        gap_after.push(String::new());
+
+        for ch in buffer.chars() {
+            let len = gap_after.len();
+            if ch == '\n' {
+                gap_after.push(String::new());
+            } else {
+                gap_after[len - 1].push(ch);
+            }
+        }
+
+        GapBuffer { gap_before: Vec::<String>::new(), gap_after: gap_after }
+    }
+}
+
 pub struct LineArena {
     arena: Arena<Line>,
     head: Option<Index>,
