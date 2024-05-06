@@ -91,6 +91,21 @@ impl GapBuffer {
             }
         }
     }
+
+    pub fn get_line(&mut self, pos: usize) -> Option<&String> {
+        // Gets the line at position
+        if pos > self.gap_before.len() + self.gap_after.len() {
+            panic!("GapBuffer::get_line(1) - index out of range");
+        }
+
+        if pos < self.gap_before.len() {
+            self.gap_before.get(pos)
+        } else if pos > self.gap_before.len() {
+            self.gap_after.get(pos - self.gap_before.len() + 1)
+        } else { // Get the buffer
+            Some(&self.buffer)
+        }
+    }
 }
 
 pub struct LineArena {
