@@ -81,10 +81,22 @@ impl GapEditor {
         }
     }
 
-    pub fn display_at_frame_cursor(&mut self, window: WINDOW) {
-        // Displays 
+    pub fn display_at_frame_cursor(&mut self) {
+        // Displays
+        let (height, width) = self.size;
+        let mbuffer = self.gap_buffer.get_frame(self.cursor_frame, height);
+        match mbuffer {
+            Some(buffer) => GapEditor::display(self.window, buffer, true, true),
+            _ => {}
+        }
     }
 }
+
+
+
+
+
+
 
 
 pub struct Editor {
