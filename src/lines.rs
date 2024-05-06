@@ -2,6 +2,7 @@ extern crate generational_arena;
 use generational_arena::Arena;
 use generational_arena::Index;
 use std::fs;
+use std::mem;
 use std::io::Read;
 use std::collections::VecDeque;
 use std::cmp::{min, max};
@@ -49,8 +50,45 @@ impl GapBuffer {
 
     pub fn set_cursor(&mut self, pos: usize) {
         // Set the cursor position to given position
-        if pos > self.gap_before.len() + self.gap_after.len() + 1 {
+        if pos > self.gap_before.len() + self.gap_after.len() {
+            // [0, self.gap_before.len()) + [self.gap_before.len()] + (self.gap_before.len(), self.gap_before.len() + self.gap_after.len()]
             panic!("GapBuffer::set_cursor(1) - index out of range");
+        }
+
+        if pos == self.gap_before.len() {
+            // Already at this position; do nothing
+            return;
+        }
+
+        let diff = pos as i32 - self.gap_before.len() as i32;
+        self.move_cursor(diff);
+    }
+
+    pub fn move_cursor(&mut self, diff: i32) {
+        // Move the cursor up or down by diff
+
+        if diff == 0 {
+            return;
+        } else if diff < 0 {
+            // Move cursor down
+            for _ in 0..(-diff) {
+                self.gap_after.push_front(mem::take(&mut self.buffer));
+                if let Some(back) = self.gap_before.pop_back() {
+                    self.buffer = back;
+                } else {
+                    panic!("GapBuffer::move_cursor(1) - index out of range");
+                }
+            }
+        } else if diff > 0 {
+            // Move cursor up
+            for _ in 0..diff {
+                self.gap_before.push_back(mem::take(&mut self.buffer));
+                if let Some(front) = self.gap_after.pop_front() {
+                    self.buffer = front;
+                } else {
+                    panic!("GapBuffer::move_cursor(1) - index out of range");
+                }
+            }
         }
     }
 }
