@@ -29,8 +29,44 @@ impl GapEditor {
         GapEditor { gap_buffer: lines::GapBuffer::new(width), cursor_display: (0, 0), cursor_text: 0 }
     }
 
-    pub fn new_from_file(mut file: fs::File, width: usize) -> GapEditor {
-        GapEditor { gap_buffer: lines::GapBuffer::new_from_file(width, file), cursor_display: (0, 0), cursor_text: 0 }
+    pub fn new_from_file(mut file: fs::File, width: usize) -> Option<GapEditor> {
+        Some(GapEditor { gap_buffer: lines::GapBuffer::new_from_file(file, width)?, cursor_display: (0, 0), cursor_text: 0 })
+    }
+
+    pub fn display(window: WINDOW, buffer: Vec<String>, start_at_beginning: bool, move_back: bool) {
+        // Displays the contents of a Vec<Vec<char>>
+
+        // Store the beginning ncurses cursor location in case move_back == true
+        let mut start_x = 0;
+        let mut start_y = 0;
+        getyx(window, &mut start_x, &mut start_y);
+
+        // Move to beginning if start_at_beginning == true
+        if start_at_beginning {
+            wmove(window, 0, 0);
+        }
+
+        // Display each line
+        for line in buffer.iter() { 
+            for ch in line.chars() {
+                waddch(window, ch as chtype);
+            }
+            // At end of each Vec<char>, move cursor to the next line
+            let mut cur_x = 0;
+            let mut cur_y = 0;
+            getyx(window, &mut cur_y, &mut cur_x);
+
+            if cur_x == 0 && line.len() > 0 {
+                // If cur_x ends up being 0 after printing a lot on screen, then
+                // it means the cursor wrapped around, so cur_y already got incremented
+            } else {
+                wmove(window, cur_y + 1, 0);
+            }
+        }
+
+        if move_back {
+            wmove(window, start_x, start_y);
+        }
     }
 }
 
