@@ -3,36 +3,55 @@ use generational_arena::Arena;
 use generational_arena::Index;
 use std::fs;
 use std::io::Read;
+use std::collections::VecDeque;
 use std::cmp::{min, max};
 
 pub struct GapBuffer {
-    gap_before: Vec<String>,
-    gap_after: Vec<String>
+    gap_before: VecDeque<String>,
+    gap_after: VecDeque<String>,
+    buffer: String
 }
 
 impl GapBuffer {
     pub fn new() -> GapBuffer {
-        GapBuffer { gap_before: Vec::<String>::new(), gap_after: Vec::<String>::new() }
+        GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: VecDeque::<String>::new(), buffer: String::new() }
     }
 
-    pub fn new_from_file(mut file: fs::File) -> GapBuffer {
+    pub fn new_from_file(mut file: fs::File) -> Option<GapBuffer> {
         // Construct new gap buffer filled with file. Set initial pointer at head.
-        let mut gap_after = Vec::<String>::new();
+        let mut gap_after = VecDeque::<String>::new();
         let mut buffer = String::new();
         file.read_to_string(&mut buffer);
 
-        gap_after.push(String::new());
+        gap_after.push_back(String::new());
 
         for ch in buffer.chars() {
-            let len = gap_after.len();
             if ch == '\n' {
-                gap_after.push(String::new());
+                gap_after.push_back(String::new());
             } else {
-                gap_after[len - 1].push(ch);
+                gap_after.back_mut()?.push(ch);
             }
         }
 
-        GapBuffer { gap_before: Vec::<String>::new(), gap_after: gap_after }
+        let buffer = gap_after.pop_front()?;
+
+        Some(GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: gap_after, buffer: buffer })
+    }
+
+    pub fn insert_snippet(&mut self, snippet: String, pos: usize) {
+        // Inserts the snippet (no newlines) to the current buffer at position
+
+        if pos > self.buffer.len() {
+            panic!("GapBuffer::insert_snippet(2) - index out of range");
+        }
+        self.buffer.insert_str(pos, &snippet);
+    }
+
+    pub fn set_cursor(&mut self, pos: usize) {
+        // Set the cursor position to given position
+        if pos > self.gap_before.len() + self.gap_after.len() + 1 {
+            panic!("GapBuffer::set_cursor(1) - index out of range");
+        }
     }
 }
 
