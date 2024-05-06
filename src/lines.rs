@@ -10,15 +10,16 @@ use std::cmp::{min, max};
 pub struct GapBuffer {
     gap_before: VecDeque<String>,
     gap_after: VecDeque<String>,
-    buffer: String
+    buffer: String,
+    width: usize
 }
 
 impl GapBuffer {
-    pub fn new() -> GapBuffer {
-        GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: VecDeque::<String>::new(), buffer: String::new() }
+    pub fn new(width: usize) -> GapBuffer {
+        GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: VecDeque::<String>::new(), buffer: String::new(), width: width }
     }
 
-    pub fn new_from_file(mut file: fs::File) -> Option<GapBuffer> {
+    pub fn new_from_file(mut file: fs::File, width: usize) -> Option<GapBuffer> {
         // Construct new gap buffer filled with file. Set initial pointer at head.
         let mut gap_after = VecDeque::<String>::new();
         let mut buffer = String::new();
@@ -36,7 +37,7 @@ impl GapBuffer {
 
         let buffer = gap_after.pop_front()?;
 
-        Some(GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: gap_after, buffer: buffer })
+        Some(GapBuffer { gap_before: VecDeque::<String>::new(), gap_after: gap_after, buffer: buffer, width: width })
     }
 
     pub fn insert_snippet(&mut self, snippet: String, pos: usize) {
@@ -46,6 +47,15 @@ impl GapBuffer {
             panic!("GapBuffer::insert_snippet(2) - index out of range");
         }
         self.buffer.insert_str(pos, &snippet);
+    }
+
+    pub fn delete(&mut self, pos: usize) {
+        // Deletes character at position in buffer
+        if pos >= self.buffer.len() {
+            panic!("GapBuffer::delete(1) - index out of range");
+        }
+
+        self.buffer.remove(pos);
     }
 
     pub fn set_cursor(&mut self, pos: usize) {
@@ -105,6 +115,43 @@ impl GapBuffer {
         } else { // Get the buffer
             Some(&self.buffer)
         }
+    }
+
+    pub fn get_frame(&mut self, start_position: (usize, usize), height: usize) -> Option<Vec<String>> {
+        // Gets a "frame" of Strings 'height' long
+
+        let (start, start_height) = start_position;
+        if start > self.gap_before.len() + self.gap_after.len() {
+            panic!("GapBuffer::get_frame(2) - index out of range!");
+        }
+
+        let mut buffer = Vec::<String>::new();
+        let initial_line = self.get_line(start)?.to_string();
+        buffer.extend_from_slice(&GapBuffer::get_display_lines(initial_line, self.width));
+
+        let mut index = start + 1;
+        while buffer.len() < height {
+            let line = self.get_line(start)?.to_string();
+            if (line.len() / self.width) + 1 + buffer.len() > height {
+                buffer.extend_from_slice(&GapBuffer::get_display_lines(line, self.width)[..height - buffer.len()]);
+            } else {
+                buffer.extend_from_slice(&GapBuffer::get_display_lines(line, self.width));
+            }
+            index += 1;
+        }
+
+        Some(buffer)
+    }
+
+    fn get_display_lines(line: String, width: usize) -> Vec<String> {
+        // Splice a string into a vec of strings each with width <= width
+        let mut buffer = Vec::<String>::new();
+        let height = 1 + line.len() / width;
+        for i in 0..(height - 1) { // iterates (height - 1) times
+            buffer.push((&line[i*width..(i+1)*width]).to_string());
+        }
+        buffer.push((&line[(height-1)*width..]).to_string());
+        buffer
     }
 }
 
