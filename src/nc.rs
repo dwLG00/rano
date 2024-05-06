@@ -19,18 +19,30 @@ type BufferSlice<'a> = &'a [Vec<char>];
 
 pub struct GapEditor {
     gap_buffer: lines::GapBuffer,
+    size: WindowYX,
     cursor_display: WindowYX,
-    cursor_text: usize
+    cursor_text: usize,
+    cursor_frame: WindowYX,
+    window: WINDOW
 }
 
 impl GapEditor {
-    pub fn new(width: usize) -> GapEditor {
+    pub fn new(window: WINDOW) -> GapEditor {
         // New, empty gap editor
-        GapEditor { gap_buffer: lines::GapBuffer::new(width), cursor_display: (0, 0), cursor_text: 0 }
+        let mut max_y = 0;
+        let mut max_x = 0;
+        getmaxyx(window, &mut max_y, &mut max_x);
+        GapEditor { gap_buffer: lines::GapBuffer::new(max_x as usize), window: window, size: (max_y as usize, max_x as usize), cursor_display: (0, 0), cursor_text: 0, cursor_frame: (0, 0) }
     }
 
-    pub fn new_from_file(mut file: fs::File, width: usize) -> Option<GapEditor> {
-        Some(GapEditor { gap_buffer: lines::GapBuffer::new_from_file(file, width)?, cursor_display: (0, 0), cursor_text: 0 })
+    pub fn new_from_file(window: WINDOW, mut file: fs::File) -> Option<GapEditor> {
+        // New eidtor from file
+        let mut max_y = 0;
+        let mut max_x = 0;
+        getmaxyx(window, &mut max_y, &mut max_x);
+        Some(GapEditor { gap_buffer: lines::GapBuffer::new_from_file(file, max_x as usize)?, window: window, 
+            size: (max_y as usize, max_x as usize), cursor_display: (0, 0), cursor_text: 0, cursor_frame: (0, 0) 
+        })
     }
 
     pub fn display(window: WINDOW, buffer: Vec<String>, start_at_beginning: bool, move_back: bool) {
@@ -67,6 +79,10 @@ impl GapEditor {
         if move_back {
             wmove(window, start_x, start_y);
         }
+    }
+
+    pub fn display_at_frame_cursor(&mut self, window: WINDOW) {
+        // Displays 
     }
 }
 
