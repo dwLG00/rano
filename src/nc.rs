@@ -10,6 +10,7 @@ use std::fs;
 use std::path::Path;
 use std::cmp::{min, max};
 use crate::lines;
+use crate::line_gap;
 
 type TextCursor = (Option<Index>, usize);
 type FrameCursor = (Option<Index>, usize);
@@ -18,96 +19,36 @@ type Buffer = Vec<Vec<char>>;
 type BufferSlice<'a> = &'a [Vec<char>];
 
 pub struct GapEditor {
-    gap_buffer: lines::GapBuffer,
+    gap_buffer: line_gap::LineBuffer,
     size: WindowYX,
     cursor_display: WindowYX,
     cursor_text: usize,
-    cursor_frame: WindowYX,
+    cursor_frame: usize,
     window: WINDOW
 }
 
 impl GapEditor {
-    pub fn new(window: WINDOW) -> GapEditor {
-        // New, empty gap editor
-        let mut max_y = 0;
-        let mut max_x = 0;
-        getmaxyx(window, &mut max_y, &mut max_x);
-        GapEditor { gap_buffer: lines::GapBuffer::new(max_x as usize), window: window, size: (max_y as usize, max_x as usize), cursor_display: (0, 0), cursor_text: 0, cursor_frame: (0, 0) }
+    pub fn new(height: usize, width: usize, window: WINDOW) -> GapEditor {
+        GapEditor { gap_buffer: line_gap::LineBuffer::new(width), size: (height, width), cursor_display: (0, 0), cursor_text: 0, cursor_frame: 0, window: window }
     }
 
-    pub fn new_from_file(window: WINDOW, mut file: fs::File) -> Option<GapEditor> {
-        // New eidtor from file
-        let mut max_y = 0;
-        let mut max_x = 0;
-        getmaxyx(window, &mut max_y, &mut max_x);
-        Some(GapEditor { gap_buffer: lines::GapBuffer::new_from_file(file, max_x as usize)?, window: window, 
-            size: (max_y as usize, max_x as usize), cursor_display: (0, 0), cursor_text: 0, cursor_frame: (0, 0) 
-        })
+    pub fn new_from_file(file: fs::File, height: usize, width: usize, window: WINDOW) -> GapEditor {
+        panic!();
     }
 
-    pub fn display(window: WINDOW, buffer: Vec<String>, start_at_beginning: bool, move_back: bool) {
-        // Displays the contents of a Vec<Vec<char>>
+    pub fn display(&mut self) {
+        let (height, width) = self.size;
 
-        // Store the beginning ncurses cursor location in case move_back == true
         let mut start_x = 0;
         let mut start_y = 0;
-        getyx(window, &mut start_x, &mut start_y);
+        getyx(&mut start_y, &mut start_x, window);
 
-        // Move to beginning if start_at_beginning == true
-        if start_at_beginning {
-            wmove(window, 0, 0);
-        }
+        wmove(self.window, 0, 0);
 
-        // Display each line
-        for line in buffer.iter() { 
-            for ch in line.chars() {
-                waddch(window, ch as chtype);
-            }
-            // At end of each Vec<char>, move cursor to the next line
-            let mut cur_x = 0;
-            let mut cur_y = 0;
-            getyx(window, &mut cur_y, &mut cur_x);
-
-            if cur_x == 0 && line.len() > 0 {
-                // If cur_x ends up being 0 after printing a lot on screen, then
-                // it means the cursor wrapped around, so cur_y already got incremented
-            } else {
-                wmove(window, cur_y + 1, 0);
-            }
-        }
-
-        if move_back {
-            wmove(window, start_x, start_y);
+        for i in 0..height {
+            let line = self.gap_buffer.get(self.cursor_frame + i);
         }
     }
-
-    pub fn display_at_frame_cursor(&mut self) {
-        // Displays
-        let (height, width) = self.size;
-        let mbuffer = self.gap_buffer.get_frame(self.cursor_frame, height);
-        match mbuffer {
-            Some(buffer) => GapEditor::display(self.window, buffer, true, true),
-            _ => {}
-        }
-    }
-
-    //TODO finish later
-    pub fn deselect_all(&mut self) {}
-    pub fn move_cursor_to(&mut self, window: WINDOW) {}
-    pub fn scroll_down(&mut self, display_after: bool) {}
-    pub fn scroll_up(&mut self, display_after: bool) {}
-    pub fn scroll_right(&mut self, display_after: bool) {}
-    pub fn scroll_left(&mut self, display_after: bool) {}
-    pub fn type_character(&mut self, character: char, display_after: bool) {}
-    pub fn newline(&mut self, display_after: bool) {}
-    pub fn backspace(&mut self, display_after: bool) {}
-    pub fn cut_line(&mut self) {}
-    pub fn insert_buffer(&mut self, buffer: Vec<char>) {}
-    pub fn paste(&mut self) {}
-    pub fn at_top(&self) -> bool { false }
-    pub fn at_beginning(&self) -> bool { false }
-    pub fn export(&self) -> String {}
-    pub fn set_save(&mut self) {}
 }
 
 

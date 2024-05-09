@@ -7,6 +7,8 @@ use std::fs;
 use std::io;
 use std::path::Path;
 mod lines;
+mod line_gap;
+mod gap_buffer;
 mod nc;
 
 // Colors
