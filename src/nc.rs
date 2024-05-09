@@ -90,6 +90,24 @@ impl GapEditor {
             _ => {}
         }
     }
+
+    //TODO finish later
+    pub fn deselect_all(&mut self) {}
+    pub fn move_cursor_to(&mut self, window: WINDOW) {}
+    pub fn scroll_down(&mut self, display_after: bool) {}
+    pub fn scroll_up(&mut self, display_after: bool) {}
+    pub fn scroll_right(&mut self, display_after: bool) {}
+    pub fn scroll_left(&mut self, display_after: bool) {}
+    pub fn type_character(&mut self, character: char, display_after: bool) {}
+    pub fn newline(&mut self, display_after: bool) {}
+    pub fn backspace(&mut self, display_after: bool) {}
+    pub fn cut_line(&mut self) {}
+    pub fn insert_buffer(&mut self, buffer: Vec<char>) {}
+    pub fn paste(&mut self) {}
+    pub fn at_top(&self) -> bool { false }
+    pub fn at_beginning(&self) -> bool { false }
+    pub fn export(&self) -> String {}
+    pub fn set_save(&mut self) {}
 }
 
 
