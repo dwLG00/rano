@@ -53,7 +53,7 @@ impl<T> GapBuffer<T> {
         } else if index < self.gap_before.len() + self.gap_after.len() {
             self.gap_after.get(index - self.gap_before.len())
         } else {
-            panic!();
+            None
         }
     }
 
@@ -68,7 +68,46 @@ impl<T> GapBuffer<T> {
     pub fn len(&self) -> usize {
         self.gap_before.len() + self.gap_after.len()
     }
+
+    pub fn iter_range<'a>(&'a self, start: usize, stop: usize) -> GapBufferIntoIter<'a, T> {
+        GapBufferIntoIter { gap_buffer: self, counter: start, stop: stop }
+    }
 }
+
+// Iterators
+
+pub struct GapBufferIntoIter<'a, T> {
+    gap_buffer: &'a GapBuffer<T>,
+    counter: usize,
+    stop: usize
+}
+
+impl<'a, T> IntoIterator for &'a GapBuffer<T> {
+    type Item = &'a T;
+    type IntoIter = GapBufferIntoIter<'a, T>;
+
+    fn into_iter(self) -> GapBufferIntoIter<'a, T> {
+        GapBufferIntoIter { gap_buffer: self, counter: 0, stop: self.len() }
+    }
+}
+
+impl<'a, T> Iterator for GapBufferIntoIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let c = self.counter;
+        self.counter += 1;
+        if c == self.stop {
+            None
+        } else if c < self.gap_buffer.gap_before.len() {
+            self.gap_buffer.gap_before.get(c)
+        } else {
+            self.gap_buffer.gap_after.get(c - self.gap_buffer.gap_before.len())
+        }
+    }
+}
+
+// Indexing
 
 /*
 impl<'a, T> IntoIterator for &'a GapBuffer<T> {

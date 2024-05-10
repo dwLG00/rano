@@ -41,12 +41,18 @@ impl GapEditor {
 
         let mut start_x = 0;
         let mut start_y = 0;
-        getyx(&mut start_y, &mut start_x, window);
+        getyx(self.window, &mut start_y, &mut start_x);
 
         wmove(self.window, 0, 0);
 
         for i in 0..height {
-            let line = self.gap_buffer.get(self.cursor_frame + i);
+            let mline = self.gap_buffer.get(self.cursor_frame + i);
+            match mline {
+                Some(line) => {
+                    
+                },
+                None => {break;}
+            }
         }
     }
 }
