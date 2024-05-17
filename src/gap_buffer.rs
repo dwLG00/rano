@@ -1,7 +1,7 @@
 use std::fs;
 use std::io::Read;
 
-struct GapBuffer {
+pub struct GapBuffer {
     buffer: Vec<char>,
     gap_position: usize,
     gap_size: usize,

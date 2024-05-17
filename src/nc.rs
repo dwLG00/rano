@@ -18,6 +18,55 @@ type WindowYX = (usize, usize);
 type Buffer = Vec<Vec<char>>;
 type BufferSlice<'a> = &'a [Vec<char>];
 
+const INIT_GAP_SIZE: usize = 1024;
+
+pub struct GapEditor {
+    buffer: gap_buffer::GapBuffer,
+    // Cursors
+    frame_cursor: usize, // Text Cursor is stored in buffer; Text Cursor = Display Cursor
+    // Basic editor fields
+    size: WindowYX,
+    window: WINDOW,
+    // Smart cursor fields
+    smart_cursor_flag: bool,
+    smart_cursor_pos: usize,
+    // Select mode fields
+    select_mode_flag: bool,
+    lmark_pos: usize,
+    rmark_pos: usize,
+    // Cut/Copy stuff
+    cut_buffer: Vec<char>,
+    // Save flag
+    pub save_flag: bool
+}
+
+impl GapEditor {
+    pub fn from_file(file: fs::File, window: WINDOW) -> GapEditor {
+        // Creates a new GapEditor from a file
+        let buffer = gap_buffer::GapBuffer::new_from_file(file, INIT_GAP_SIZE);
+        GapEditor::from_buffer(buffer, window)
+    }
+
+    pub fn from_buffer(buffer: gap_buffer::GapBuffer, window: WINDOW) -> GapEditor {
+        // Creates a new GapEditor from the provided GapBuffer
+        let size = get_window_dimensions(window);
+
+        GapEditor {
+            buffer: buffer,
+            frame_cursor: 0,
+            size: size,
+            window: window,
+            smart_cursor_flag: false,
+            smart_cursor_pos: 0,
+            select_mode_flag: false,
+            lmark_pos: 0,
+            rmark_pos: 0,
+            cut_buffer: Vec::<char>::new(),
+            save_flag: true
+        }
+    }
+}
+
 pub struct Editor {
     line_arena: lines::LineArena,
     // Cursors
