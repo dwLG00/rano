@@ -102,6 +102,54 @@ impl GapEditor {
     pub fn display_at_cursor(&self) {
         self.display(self.frame_cursor);
     }
+
+    pub fn deselect_all(&mut self) {
+        // Sets select_mode_flag to false, and resets all marks
+
+        self.select_mode_flag = false;
+        self.lmark_pos = 0;
+        self.rmark_pos = 0;
+    }
+
+    pub fn move_cursor_to(&mut self) {
+        // Move the ncurses cursor to the same location as the text cursor
+        if self.buffer.gap_position < self.frame_cursor {
+            // text cursor is out of frame -> move the frame cursor to the text cursor!
+            self.frame_cursor = self.buffer.gap_position;
+        } else {
+            let mut new_x: i32 = 0;
+            let mut new_y: i32 = 0;
+            // Loop over all characters between frame cursor and target position
+            for pos in self.frame_cursor..self.buffer.gap_position {
+                if self.buffer.get(pos) == '\n' {
+                    new_x = 0;
+                    new_y += 1;
+                } else {
+                    new_x += 1;
+                    if new_x == width {
+                        new_x = 0;
+                        new_y += 1;
+                    }
+                }
+            }
+            if new_y >= height {
+                // Text cursor is out of frame
+                if let Some(new_pos) = self.put_on_last_line() {
+                    let new_y, new_x = new_pos;
+                    wmove(self.window, new_y, new_x);
+                }
+            } else {
+                wmove(self.window, new_y, new_x);
+            }
+        }
+    }
+
+    pub fn put_on_last_line(&mut self) -> Option<(usize, usize)> {
+        // Considering the text cursor is on the last line,
+        // rewrite the frame cursor and return the display location
+        // if applicable
+    }
+
 }
 
 
