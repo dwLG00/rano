@@ -33,14 +33,14 @@ impl GapBuffer {
         self.buffer.len() - self.gap_size
     }
 
-    pub fn get(&self, idx: usize) -> &char {
+    pub fn get(&self, idx: usize) -> Option<&char> {
         // Get the character at index, not counting the gap
-        assert!(idx < self.len());
-
-        if idx < self.gap_position {
-            &self.buffer[idx]
+        if idx >= self.len() {
+            None
+        } else if idx < self.gap_position {
+            Some(&self.buffer[idx])
         } else {
-            &self.buffer[idx + self.gap_size]
+            Some(&self.buffer[idx + self.gap_size])
         }
     }
 
@@ -103,5 +103,123 @@ impl GapBuffer {
         self.buffer[self.gap_position - 1] = '\0';
         self.gap_position -= 1;
         self.gap_size += 1;
+    }
+
+    pub fn get_left_edge(&self, start: usize) -> usize {
+        // Get index of the left edge (last character to the left
+        // of start that is not a newline)
+
+        if start == 0 {
+            // Edge case: we start at the very beginning
+            return 0;
+        }
+
+        let mut pointer = start - 1;
+
+        // Loop needs to decrement pointer, only loop until pointer == 0
+        while pointer > 0 {
+            if let Some(ch) = self.get(pointer) {
+                if *ch == '\n' {
+                    return pointer + 1;
+                }
+            }
+            pointer -= 1;
+        }
+        // Edge: last case
+        if let Some(ch) = self.get(0) {
+            if *ch == '\n' {
+                return 1;
+            }
+        }
+        // None of the characters are newlines -> return first index
+        0
+    }
+
+    pub fn seek_back_n_lines(&self, start: usize, n_lines: usize) -> usize {
+        // Seeks back n actual lines, and returns the left edge of
+        // the very first line
+
+        let mut pointer = start;
+        for i in 1..=n_lines {
+            let left_edge = self.get_left_edge(pointer);
+            if left_edge == 0 {
+                return 0;
+            }
+            if i < n_lines {
+                pointer = left_edge - 1;
+            } else {
+                pointer = left_edge;
+            }
+        }
+        pointer
+    }
+
+    pub fn seek_back_n_display_lines(&self, start: usize, n_lines: usize, width: usize) -> usize {
+        // Seek back n display lines, where the displayed line length
+        // is given
+
+        if start == 0 {
+            // Edge case: start at beginning
+            return 0;
+        }
+
+        let mut y_count = 0;
+        let mut pointer = start - 1;
+
+        // Continue seeking actual lines until we match or
+        // overshoot the number of display lines
+        while y_count < n_lines {
+            let left_edge = self.get_left_edge(start);
+            let line_height = 1 + (start - left_edge) / width;
+            y_count += line_height;
+            if left_edge == 0 {
+                // We've reached the top of the viewport, so
+                // just return 0
+                return 0;
+            } else {
+                pointer = left_edge - 1;
+            }
+        }
+
+        if y_count == n_lines {
+            // We've successfully seeked to the left edge of
+            // the beginning line (except we've decremented by 1)
+            pointer + 1
+        } else {
+            // We've overshot by some amount of display lines, so
+            // add the display lines we've overshot back
+            pointer + (n_lines - y_count) * width + 1
+        }
+    }
+
+    pub fn count_yx(&self, start: usize, end: usize, width: usize) -> (usize, usize) {
+        // Count the position of `end`, if `start` was at (0, 0)
+        assert!(start < self.len() && end < self.len());
+
+        let mut cur_y = 0;
+        let mut cur_x = 0;
+
+        for i in start..end {
+            if let Some(ch) = self.get(i) {
+                if *ch == '\n' {
+                    cur_y += 1;
+                    cur_x = 0;
+                } else {
+                    cur_x += 1;
+                    if cur_x == width {
+                        cur_x = 0;  
+                        cur_y += 1;
+                    }
+                }
+            }
+        }
+        if let Some(ch) = self.get(end) {
+            if *ch == '\n' {
+                // Edge case: end is a newline
+                cur_x = 0;
+                cur_y += 1;
+            }
+        }
+        (cur_y, cur_x)
     }
 }

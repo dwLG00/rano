@@ -77,25 +77,26 @@ impl GapEditor {
         let mut new_x = 0;
 
         for i in start..self.buffer.len() {
-            let ch = self.buffer.get(i);
-            match ch {
-                '\n' => {
-                    getyx(self.window, &mut cur_y, &mut cur_x);
-                    if cur_x == 0 {
-                    } else {
-                        wmove(self.window, cur_y + 1, 0);
+            if let Some(ch) = self.buffer.get(i) {
+                match ch {
+                    '\n' => {
+                        getyx(self.window, &mut cur_y, &mut cur_x);
+                        if cur_x == 0 {
+                        } else {
+                            wmove(self.window, cur_y + 1, 0);
+                        }
+                    },
+                    _ => {
+                        waddch(self.window, *ch as chtype);
                     }
-                },
-                _ => {
-                    waddch(self.window, *ch as chtype);
                 }
+                getyx(self.window, &mut cur_y, &mut cur_x);
+                if cur_y == new_y && cur_x == new_x {
+                    break;
+                }
+                new_y = cur_y;
+                new_x = cur_x;
             }
-            getyx(self.window, &mut cur_y, &mut cur_x);
-            if cur_y == new_y && cur_x == new_x {
-                break;
-            }
-            new_y = cur_y;
-            new_x = cur_x;
         }
     }
 
@@ -122,14 +123,16 @@ impl GapEditor {
             let mut new_y: i32 = 0;
             // Loop over all characters between frame cursor and target position
             for pos in self.frame_cursor..self.buffer.gap_position {
-                if *self.buffer.get(pos) == '\n' {
-                    new_x = 0;
-                    new_y += 1;
-                } else {
-                    new_x += 1;
-                    if new_x == width.try_into().unwrap() {
+                if let Some(ch) = self.buffer.get(pos) {
+                if *ch == '\n' {
                         new_x = 0;
                         new_y += 1;
+                    } else {
+                        new_x += 1;
+                        if new_x == width.try_into().unwrap() {
+                            new_x = 0;
+                            new_y += 1;
+                        }
                     }
                 }
             }
@@ -149,9 +152,13 @@ impl GapEditor {
         // Considering the text cursor is on the last line,
         // rewrite the frame cursor and return the display location
         // if applicable
-        None
-    }
 
+        let (height, width) = self.size;
+
+        self.frame_cursor = self.buffer.seek_back_n_display_lines(self.buffer.gap_position, height, width);
+        let (cur_y, cur_x) = self.buffer.count_yx(self.frame_cursor, self.buffer.gap_position, width);
+        Some((cur_y as i32, cur_x as i32))
+    }
 }
 
 
