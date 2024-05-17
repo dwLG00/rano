@@ -45,6 +45,7 @@ impl GapEditor {
 
         wmove(self.window, 0, 0);
 
+        /*
         for i in 0..height {
             let mline = self.gap_buffer.get(self.cursor_frame + i);
             match mline {
@@ -53,6 +54,10 @@ impl GapEditor {
                 },
                 None => {break;}
             }
+        }
+        */
+        for line in self.gap_buffer.iter_range(self.cursor_frame, self.cursor_frame + height) {
+            line.export_char()
         }
     }
 }

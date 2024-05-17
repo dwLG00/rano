@@ -1,5 +1,6 @@
 use crate::gap_buffer;
 use crate::gap_buffer::GapBuffer;
+use core::slice::Iter;
 use std::iter;
 
 pub struct LineBuffer {
@@ -37,6 +38,10 @@ impl LineBuffer {
     pub fn get(&mut self, idx: usize) -> Option<&Line> {
         self.content.get(idx)
     }
+
+    pub fn iter_range<'a>(&'a self, start: usize, stop: usize) -> gap_buffer::GapBufferIntoIter<'a, Line> {
+        self.content.iter_range(start, stop)
+    }
 }
 
 impl Line {
@@ -59,6 +64,23 @@ impl Line {
         */
         buffer
     }
+
+    pub fn export_buffer<'a, I>(&'a self) -> I where I: Iterator<Item=char> {
+        //self.content.into_iter().map(|tok| tok.export_buffer()).join()
+        self.content.into_iter().map(|tok| tok.export_buffer()).reduce(|acc, iter| acc.chain(iter))
+        /*
+        let iter = self.content.into_iter();
+        if let Some(tok) = iter.next() {
+            let mut buffer = tok.export_buffer();
+            for tok in iter {
+                buffer = buffer.chain(tok.export_buffer());
+            }
+            buffer
+        } else {
+            Vec::<char>::new().iter()
+        }
+        */
+    }
 }
 
 impl Token {
@@ -69,7 +91,7 @@ impl Token {
     pub fn export(&self) -> String {
         self.content.iter().collect()
     }
-    pub fn export_buffer(&mut self) -> &Vec<char> {
-        &self.content
+    pub fn export_buffer<'a>(&'a self) -> Iter<'a, char> {
+        self.content.iter()
     }
 }
