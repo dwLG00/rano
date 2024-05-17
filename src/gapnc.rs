@@ -164,11 +164,39 @@ impl GapEditor {
         // Handle the cursor changes for scrolling down
 
         let (height, width) = self.size;
+        let current_xpos = self.buffer.xpos(self.buffer.gap_position, width);
 
-        if self.smart_cursor_flag {
-            // 
+        // Get the new text cursor's position
+        let new_text_cursor = if self.smart_cursor_flag {
+            self.buffer.seek_next_line_with_xpos(width, self.smart_cursor_pos)
+        } else {
+            self.buffer.seek_next_line(width)
+        };
+
+        match new_text_cursor {
+            Some((next_text_pos, less_than_xpos)) => {
+                self.buffer.move_gap(next_text_pos);
+                if less_than_xpos && !self.smart_cursor_flag {
+                    self.smart_cursor_flag = true;
+                    self.smart_cursor_pos = current_xpos;
+                }
+            },
+            None => {
+                return;
+            }
         }
+        // Check if we have to move the frame cursor
+        if cursor_bottom(self.window, height) {
+            // The cursor is on the bottom of the viewport,
+            // so we must move the display frame down one
+            if let Some(new_frame_cursor) = self.buffer.get_next_display_line_head(self.frame_cursor, width) {
+                self.frame_cursor = new_frame_cursor;
+            }
+        }
+        // Move the ncurses display cursor
+        self.move_cursor_to();
     }
+
 }
 
 
@@ -179,4 +207,21 @@ fn get_window_dimensions(window: WINDOW) -> WindowYX {
     getmaxyx(window, &mut height, &mut width);
 
     (height as usize, width as usize)
+}
+
+fn cursor_top(window: WINDOW) -> bool {
+    // Returns whether the cursor is on the top line or not
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    getyx(window, &mut cur_y, &mut cur_x);
+    cur_y == 0
+}
+
+fn cursor_bottom(window: WINDOW, height: usize) -> bool {
+    // Returns whether the cursor is on the bottom line or not
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+    getyx(window, &mut cur_y, &mut cur_x);
+    cur_y == (height - 1) as i32
 }

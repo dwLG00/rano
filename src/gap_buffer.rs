@@ -269,10 +269,20 @@ impl GapBuffer {
         // the new cursor position's x-position is
         // less than the previous line
 
+        let xpos = self.xpos(self.gap_position, width);
+        self.seek_next_line_with_xpos(width, xpos)
+    }
+
+    pub fn seek_next_line_with_xpos(&self, width: usize, xpos: usize) -> Option<(usize, bool)> {
+        // Returns the index of the cursor one
+        // display line down, along with whether
+        // the new cursor position's x-position is
+        // less than the previous line
+
         let left_edge = self.get_left_edge(self.gap_position);
         let right_edge = self.get_right_edge(self.gap_position);
         // What xpos the cursor is at
-        let xpos = self.xpos(self.gap_position, width);
+        //let xpos = self.xpos(self.gap_position, width);
 
         if right_edge - self.gap_position > width && self.gap_position + width < self.len() {
             // next display line is the same actual line (and is in range)
