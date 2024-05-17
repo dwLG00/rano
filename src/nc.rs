@@ -65,6 +65,43 @@ impl GapEditor {
             save_flag: true
         }
     }
+
+    pub fn display(&self, start: usize) {
+        // Starts with the char at start, and outputs all characters that will fit in window
+        let (height, width) = self.size;
+        let mut start_x = 0;
+        let mut start_y = 0;
+        getyx(self.window, &mut start_y, &mut start_x);
+
+        wmove(self.window, 0, 0);
+
+        let mut cur_y = 0;
+        let mut cur_x = 0;
+        let mut new_y = 0;
+        let mut new_x = 0;
+
+        for i in start..self.buffer.len() {
+            let ch = self.buffer.get(i);
+            match ch {
+                '\n' => {
+                    getyx(self.window, &mut cur_y, &mut cur_x);
+                    if cur_x == 0 {
+                    } else {
+                        wmove(self.window, cur_y + 1, 0);
+                    }
+                },
+                _ => {
+                    waddch(self.window, *ch as chtype);
+                }
+            }
+            getyx(self.window, &mut cur_y, &mut cur_x);
+            if cur_y == new_y && cur_x == new_x {
+                break;
+            }
+            new_y = cur_y;
+            new_x = cur_x;
+        }
+    }
 }
 
 pub struct Editor {
