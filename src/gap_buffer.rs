@@ -206,7 +206,7 @@ impl GapBuffer {
         }
     }
 
-    pub fn get_next_display_line_head(&self, start: usize, width: usize) -> Some(usize) {
+    pub fn get_next_display_line_head(&self, start: usize, width: usize) -> Option<usize> {
         // Gets the beginning of next display line, or None if doesn't exist
         let right_edge = self.get_right_edge(start);
         if right_edge == self.len() || right_edge + 1 == self.len() {
@@ -216,11 +216,12 @@ impl GapBuffer {
 
         if right_edge - start > width {
             // The head of the next line is > 1 display line away
-            start + width
+            return Some(start + width);
         } else {
             // Left edge of the next line is right after the right_edge
-            right_edge + 1
+            return Some(right_edge + 1);
         }
+        None
     }
 
     pub fn count_yx(&self, start: usize, end: usize, width: usize) -> (usize, usize) {
@@ -252,5 +253,42 @@ impl GapBuffer {
             }
         }
         (cur_y, cur_x)
+    }
+
+    pub fn xpos(&self, idx: usize, width: usize) -> usize {
+        // Get the x position of the index in the
+        // display line in the viewport
+        let left_edge = self.get_left_edge(idx);
+        let line_len = (idx + 1 - left_edge);
+        line_len - (line_len / width) * width // Acts as finding the remainder
+    }
+
+    pub fn seek_next_line(&self, width: usize) -> Option<(usize, bool)> {
+        // Returns the index of the cursor one
+        // display line down, along with whether
+        // the new cursor position's x-position is
+        // less than the previous line
+
+        let left_edge = self.get_left_edge(self.gap_position);
+        let right_edge = self.get_right_edge(self.gap_position);
+        // What xpos the cursor is at
+        let xpos = self.xpos(self.gap_position, width);
+
+        if right_edge - self.gap_position > width && self.gap_position + width < self.len() {
+            // next display line is the same actual line (and is in range)
+            return Some((self.gap_position + width, false));
+        } else if right_edge != self.len() {
+            let nl_left_edge = right_edge + 1;
+            if let nl_right_edge = self.get_right_edge(nl_left_edge) {
+                if nl_right_edge <= xpos {
+                    // Next display position is less than the starting position
+                    return Some((nl_right_edge - 1, true));
+                } else {
+                    return Some((nl_left_edge + xpos, false));
+                }
+            }
+        }
+        // We're on the last line
+        None
     }
 }

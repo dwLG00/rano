@@ -160,8 +160,14 @@ impl GapEditor {
         Some((cur_y as i32, cur_x as i32))
     }
 
-    pub fn scroll_down() {
+    pub fn scroll_down(&mut self) {
         // Handle the cursor changes for scrolling down
+
+        let (height, width) = self.size;
+
+        if self.smart_cursor_flag {
+            // 
+        }
     }
 }
 
