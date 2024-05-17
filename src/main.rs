@@ -9,6 +9,7 @@ use std::path::Path;
 mod gap_buffer;
 mod lines;
 mod nc;
+mod gapnc;
 
 // Colors
 static CP_HIGHLIGHT: i16 = 1;
