@@ -135,6 +135,20 @@ impl GapBuffer {
         0
     }
 
+    pub fn get_right_edge(&self, start: usize) -> usize {
+        // Gets the next newline (could be out of range)
+        let mut pointer = start;
+        while pointer < self.len() {
+            if let Some(ch) = self.get(pointer) {
+                if *ch == '\n' {
+                    break;
+                }
+            }
+            pointer += 1;
+        }
+        pointer
+    }
+
     pub fn seek_back_n_lines(&self, start: usize, n_lines: usize) -> usize {
         // Seeks back n actual lines, and returns the left edge of
         // the very first line
@@ -189,6 +203,23 @@ impl GapBuffer {
             // We've overshot by some amount of display lines, so
             // add the display lines we've overshot back
             pointer + (n_lines - y_count) * width + 1
+        }
+    }
+
+    pub fn get_next_display_line_head(&self, start: usize, width: usize) -> Some(usize) {
+        // Gets the beginning of next display line, or None if doesn't exist
+        let right_edge = self.get_right_edge(start);
+        if right_edge == self.len() || right_edge + 1 == self.len() {
+            // We're already on the last line
+            return None;
+        }
+
+        if right_edge - start > width {
+            // The head of the next line is > 1 display line away
+            start + width
+        } else {
+            // Left edge of the next line is right after the right_edge
+            right_edge + 1
         }
     }
 

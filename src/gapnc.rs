@@ -159,6 +159,10 @@ impl GapEditor {
         let (cur_y, cur_x) = self.buffer.count_yx(self.frame_cursor, self.buffer.gap_position, width);
         Some((cur_y as i32, cur_x as i32))
     }
+
+    pub fn scroll_down() {
+        // Handle the cursor changes for scrolling down
+    }
 }
 
 
