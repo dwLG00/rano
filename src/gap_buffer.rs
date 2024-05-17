@@ -9,10 +9,10 @@ struct GapBuffer {
 }
 
 impl GapBuffer {
-    pub fn new_from_file(mut file: fs::File, gap_size: usize) -> Gap Buffer {
+    pub fn new_from_file(mut file: fs::File, gap_size: usize) -> GapBuffer {
         // Read a file into a GapBuffer, with a certain starting gap size and
         // with the gap at the very beginning
-        let mut buffer: Vec::<char>::new();
+        let mut buffer =  Vec::<char>::new();
         let mut buffer_str = String::new();
         file.read_to_string(&mut buffer_str);
 
@@ -69,8 +69,8 @@ impl GapBuffer {
 
     pub fn realloc(&mut self) {
         // Reallocate the buffer (gap ran out)
-        let new = ['\0'; self.next_alloc_gap_size];
-        self.buffer.splice(self.gap_pos..self.gap_pos, new);
+        let new = vec!['\0'; self.next_alloc_gap_size];
+        self.buffer.splice(self.gap_position..self.gap_position, new);
 
         /*
         for i in 0..self.next_alloc_gap_size {
@@ -90,7 +90,7 @@ impl GapBuffer {
         }
 
         self.buffer[self.gap_position] = ch;
-        self.gap_pos += 1;
+        self.gap_position += 1;
         self.gap_size -= 1;
     }
 

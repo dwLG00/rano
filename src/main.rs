@@ -6,6 +6,7 @@ use std::io::{Read, Write};
 use std::fs;
 use std::io;
 use std::path::Path;
+mod gap_buffer;
 mod lines;
 mod nc;
 

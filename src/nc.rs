@@ -10,6 +10,7 @@ use std::fs;
 use std::path::Path;
 use std::cmp::{min, max};
 use crate::lines;
+use crate::gap_buffer;
 
 type TextCursor = (Option<Index>, usize);
 type FrameCursor = (Option<Index>, usize);
