@@ -2,8 +2,8 @@ use std::fs;
 use std::io::Read;
 
 pub struct GapBuffer {
-    buffer: Vec<char>,
-    gap_position: usize,
+    pub buffer: Vec<char>,
+    pub gap_position: usize,
     gap_size: usize,
     next_alloc_gap_size: usize
 }

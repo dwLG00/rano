@@ -113,6 +113,7 @@ impl GapEditor {
 
     pub fn move_cursor_to(&mut self) {
         // Move the ncurses cursor to the same location as the text cursor
+        let (height, width) = self.size;
         if self.buffer.gap_position < self.frame_cursor {
             // text cursor is out of frame -> move the frame cursor to the text cursor!
             self.frame_cursor = self.buffer.gap_position;
@@ -121,21 +122,21 @@ impl GapEditor {
             let mut new_y: i32 = 0;
             // Loop over all characters between frame cursor and target position
             for pos in self.frame_cursor..self.buffer.gap_position {
-                if self.buffer.get(pos) == '\n' {
+                if *self.buffer.get(pos) == '\n' {
                     new_x = 0;
                     new_y += 1;
                 } else {
                     new_x += 1;
-                    if new_x == width {
+                    if new_x == width.try_into().unwrap() {
                         new_x = 0;
                         new_y += 1;
                     }
                 }
             }
-            if new_y >= height {
+            if new_y >= height.try_into().unwrap() {
                 // Text cursor is out of frame
                 if let Some(new_pos) = self.put_on_last_line() {
-                    let new_y, new_x = new_pos;
+                    let (new_y, new_x) = new_pos;
                     wmove(self.window, new_y, new_x);
                 }
             } else {
@@ -144,10 +145,11 @@ impl GapEditor {
         }
     }
 
-    pub fn put_on_last_line(&mut self) -> Option<(usize, usize)> {
+    pub fn put_on_last_line(&mut self) -> Option<(i32, i32)> {
         // Considering the text cursor is on the last line,
         // rewrite the frame cursor and return the display location
         // if applicable
+        None
     }
 
 }
