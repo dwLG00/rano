@@ -283,6 +283,13 @@ impl GapEditor {
         self.buffer.insert('\n');
         self.move_cursor_to();
     }
+
+    pub fn backspace(&mut self) {
+        self.smart_cursor_flag = false;
+
+        self.buffer.delete();
+        self.move_cursor_to();
+    }
 }
 
 

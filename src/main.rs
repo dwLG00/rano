@@ -325,9 +325,10 @@ fn main() {
                     },
                     '\u{007F}' => {
                         // Handle backspaces separately
+                        editor.backspace();
                         //editor.backspace(false);
                         // TODO Implement
-                        break;
+                        //break;
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break
