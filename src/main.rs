@@ -382,8 +382,8 @@ fn main() {
                         beep();
                     }
                     _ => {
-                        //editor.type_character(c, false);
-                        break;
+                        editor.type_character(c);
+                        //break;
                     }
                 }
             },
