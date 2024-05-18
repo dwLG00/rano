@@ -272,9 +272,15 @@ impl GapEditor {
     pub fn type_character(&mut self, character: char) {
         // Handles typing a character
         self.smart_cursor_flag = false;
-        let (height, width) = self.size;
 
         self.buffer.insert(character);
+        self.move_cursor_to();
+    }
+
+    pub fn newline(&mut self) {
+        self.smart_cursor_flag = false;
+
+        self.buffer.insert('\n');
         self.move_cursor_to();
     }
 }

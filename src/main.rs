@@ -305,33 +305,23 @@ fn main() {
     while true {
         match ch {
             Some(WchResult::KeyCode(KEY_DOWN)) => {
-                //editor.scroll_down(false);
                 editor.scroll_down();
             },
             Some(WchResult::KeyCode(KEY_UP)) => {
                 editor.scroll_up();
             },
             Some(WchResult::KeyCode(KEY_RIGHT)) => {
-                //editor.scroll_right(false);
                 editor.scroll_right();
-                //TODO Implement
-                //break;
             },
             Some(WchResult::KeyCode(KEY_LEFT)) => {
-                //editor.scroll_left(false);
                 editor.scroll_left();
-                //TODO Implement
-                //break;
             },
             Some(WchResult::Char(char_code)) => {
                 // Typed some character
                 let c = char::from_u32(char_code as u32).expect("Invalid char");
                 match c {
                     '\n' => {
-                        // Handle newlines separately
-                        //editor.newline(false);
-                        //TODO Implement
-                        break;
+                        editor.newline();
                     },
                     '\u{007F}' => {
                         // Handle backspaces separately
