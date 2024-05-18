@@ -563,6 +563,17 @@ impl GapEditor {
         //self.insert_buffer(*buffer.clone());
     }
 
+    pub fn set_clipboard_cursor(&mut self, pos: usize) {
+        // Sets the clipboard cursor
+        assert!(pos < self.clipboard.len());
+        self.clipboard_cursor = Some(pos);
+    }
+
+    pub fn disable_clipboard(&mut self) {
+        // Sets the clipboard cursor to None
+        self.clipboard_cursor = None;
+    }
+
     pub fn export(&self) -> String {
         self.buffer.export()
     }
