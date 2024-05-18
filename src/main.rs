@@ -450,7 +450,8 @@ fn main() {
                         // Ctrl-K -> cut
                         //editor.cut_line();
                         //TODO Implement
-                        break;
+                        //break;
+                        editor.cut();
                     },
                     '\u{000C}' => {
                         // Ctrl-L -> Set mark

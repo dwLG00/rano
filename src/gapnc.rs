@@ -463,6 +463,11 @@ impl GapEditor {
 
         self.cut_buffer.clear();
         self.cut_buffer.extend_from_slice(&self.buffer.cut(lmark, rmark, new_cursor_pos));
+
+        // Cleanup
+        self.smart_cursor_flag = false;
+        self.set_save();
+        self.deselect_marks();
     }
 
     pub fn export(&self) -> String {

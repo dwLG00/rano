@@ -154,7 +154,7 @@ impl GapBuffer {
         let mut buffer = Vec::<char>::new();
 
         for i in l..=r {
-            self.move_gap(i + 1);
+            self.move_gap(l + 1);
             match self.pop() {
                 Some(c) => { buffer.push(c); },
                 None => { return buffer; }
