@@ -385,4 +385,11 @@ impl GapBuffer {
         // We're on the last line
         None
     }
+
+    pub fn export(&self) -> String {
+        let mut first: String = self.buffer[..self.gap_position].iter().collect();
+        let second: String = self.buffer[self.gap_position + self.gap_size..].iter().collect();
+        first.push_str(&second);
+        first
+    }
 }

@@ -290,6 +290,15 @@ impl GapEditor {
         self.buffer.delete();
         self.move_cursor_to();
     }
+
+    pub fn export(&self) -> String {
+        self.buffer.export()
+    }
+
+    pub fn set_save(&mut self) {
+        // Set the save flag
+        self.save_flag = false;
+    }
 }
 
 

@@ -26,7 +26,8 @@ fn open_file(window: WINDOW, path: &str) -> gapnc::GapEditor {
     gapnc::GapEditor::from_file(file, window)
 }
 
-fn save_to_file(filename: String, editor: &nc::Editor) -> Result<(), io::Error>{
+//fn save_to_file(filename: String, editor: &nc::Editor) -> Result<(), io::Error>{
+fn save_to_file(filename: String, editor: &gapnc::GapEditor) -> Result<(), io::Error>{
     // Saves the file to the given path
     let mut maybe_file = fs::OpenOptions::new().write(true).create(true).open(&filename);
     match maybe_file {
@@ -96,7 +97,8 @@ fn draw_control_bar(window: WINDOW) {
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
 
-fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool{
+//fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool{
+fn save_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool{
     // Runs the UI process of saving
     // Returns true if actually saved
 
@@ -182,7 +184,8 @@ fn save_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool{
     ret
 }
 
-fn exit_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool {
+//fn exit_loop(window: WINDOW, editor: &nc::Editor, path: &String) -> bool {
+fn exit_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool {
     // Handle UI sequence for exiting when you haven't saved
 
     let mut max_x = 0;
@@ -327,13 +330,10 @@ fn main() {
                         // Handle backspaces separately
                         editor.backspace();
                         //editor.backspace(false);
-                        // TODO Implement
-                        //break;
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break
                         //TODO Implement
-                        /*
                         if editor.save_flag {
                             break;
                         } else if exit_loop(ctrl_window, &editor, &path) {
@@ -342,20 +342,16 @@ fn main() {
                             draw_control_bar(ctrl_window);
                             wrefresh(ctrl_window);
                         }
-                        */
                         return;
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
                         //TODO Implement
-                        /*
                         if save_loop(ctrl_window, &editor, &path) {
                             editor.set_save();
                         }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
-                        */
-                        break;
                     },
                     '\u{000B}' => {
                         // Ctrl-K -> cut
