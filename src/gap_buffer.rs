@@ -164,6 +164,15 @@ impl GapBuffer {
         buffer
     }
 
+    pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
+        // Inserts the char buffer into the gap buffer
+        // at the current cursor's location
+
+        for ch in buffer.iter() {
+            self.insert(*ch);
+        }
+    }
+
     pub fn get_left_edge(&self, start: usize) -> usize {
         // Get index of the left edge (last character to the left
         // of start that is not a newline)

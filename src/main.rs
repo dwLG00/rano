@@ -439,7 +439,6 @@ fn main() {
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
-                        //TODO Implement
                         if save_loop(ctrl_window, &editor, &path) {
                             editor.set_save();
                         }
@@ -448,9 +447,6 @@ fn main() {
                     },
                     '\u{000B}' => {
                         // Ctrl-K -> cut
-                        //editor.cut_line();
-                        //TODO Implement
-                        //break;
                         editor.cut();
                     },
                     '\u{000C}' => {
@@ -461,7 +457,8 @@ fn main() {
                         // Ctrl-U -> paste
                         //editor.paste();
                         //TODO Implement
-                        break;
+                        //break;
+                        editor.paste();
                     },
                     '\u{001F}' => {
                         // Ctrl-/ -> Go to line

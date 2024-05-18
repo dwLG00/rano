@@ -470,6 +470,21 @@ impl GapEditor {
         self.deselect_marks();
     }
 
+    pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
+        // Inserts buffer at cursor
+        self.buffer.insert_buffer(buffer);
+
+        // Cleanup
+        self.smart_cursor_flag = false;
+        self.set_save();
+        self.deselect_marks();
+    }
+
+    pub fn paste(&mut self) {
+        // Pastes the cut buffer at the cursor position
+        self.buffer.insert_buffer(&self.cut_buffer);
+    }
+
     pub fn export(&self) -> String {
         self.buffer.export()
     }
