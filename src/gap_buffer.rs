@@ -327,7 +327,7 @@ impl GapBuffer {
                 // Next line is a hanging newline
                 if nl_right_edge == nl_left_edge {
                     return Some((nl_left_edge, xpos != 0));
-                } else if nl_right_edge <= xpos {
+                } else if nl_right_edge - nl_left_edge <= xpos {
                     // Next display position is less than the starting position
                     return Some((nl_right_edge - 1, true));
                 } else {
