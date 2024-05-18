@@ -78,6 +78,22 @@ impl GapEditor {
         let mut new_y = 0;
         let mut new_x = 0;
 
+        // If select mode is on, get the range on which we need to highlight
+        let (lmark, rmark) = if self.select_mode_flag {
+            if self.select_active {
+                if self.buffer.gap_position < self.lmark {
+                    (self.buffer.gap_position, self.lmark)
+                } else {
+                    (self.lmark, self.buffer.gap_position)
+                }
+            } else {
+                (self.lmark, self.rmark)
+            }
+        } else {
+            (0, 0)
+        };
+
+        // Display the characters
         for i in start..self.buffer.len() {
             if let Some(ch) = self.buffer.get(i) {
                 match ch {
@@ -86,7 +102,11 @@ impl GapEditor {
                         wmove(self.window, cur_y + 1, 0);
                     },
                     _ => {
-                        waddch(self.window, *ch as chtype);
+                        if self.select_mode_flag && lmark <= i && i <= rmark {
+                            waddch_with_highlight(self.window, *ch as chtype);
+                        } else {
+                            waddch(self.window, *ch as chtype);
+                        }
                     }
                 }
                 getyx(self.window, &mut cur_y, &mut cur_x);
@@ -451,4 +471,11 @@ fn cursor_end(window: WINDOW, height: usize, width: usize) -> bool {
 
     getyx(window, &mut cur_y, &mut cur_x);
     cur_y == (height - 1) as i32 && cur_x == (width - 1) as i32
+}
+
+fn waddch_with_highlight(window: WINDOW, ch: chtype) {
+    // Add character with background highlighting
+    wattron(window, COLOR_PAIR(1)); // CP_HIGHLIGHT
+    waddch(window, ch);
+    wattroff(window, COLOR_PAIR(1));
 }
