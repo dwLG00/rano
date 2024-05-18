@@ -124,7 +124,7 @@ impl GapEditor {
         self.display(self.frame_cursor);
     }
 
-    pub fn deselect_all(&mut self) {
+    pub fn deselect_marks(&mut self) {
         // Sets select_mode_flag to false, and resets all marks
 
         self.select_mode_flag = false;
@@ -380,6 +380,7 @@ impl GapEditor {
         if !self.select_mode_flag {
             // No selections right now
             self.lmark = self.buffer.gap_position;
+            self.select_mode_flag = true;
             self.select_active = true; // We are actively selecting (i.e. the cursor acts as the second anchor)
         } else if self.select_mode_flag && self.select_active {
             // We are selecting with just one marker -> register
@@ -398,6 +399,7 @@ impl GapEditor {
                 self.lmark = self.rmark;
                 self.rmark = temp;
             }
+            self.select_active = false;
         } else if self.select_mode_flag && !self.select_active {
             // We already have two markers
 
