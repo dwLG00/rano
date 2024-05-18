@@ -100,7 +100,7 @@ impl GapEditor {
         }
     }
 
-    pub fn display_at_cursor(&self) {
+    pub fn display_at_frame_cursor(&self) {
         self.display(self.frame_cursor);
     }
 

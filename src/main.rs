@@ -6,6 +6,7 @@ use std::io::{Read, Write};
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::process;
 mod gap_buffer;
 mod lines;
 mod nc;
@@ -16,12 +17,13 @@ static CP_HIGHLIGHT: i16 = 1;
 
 // File IO
 
-fn open_file(window: WINDOW, path: &str) -> nc::Editor {
+fn open_file(window: WINDOW, path: &str) -> gapnc::GapEditor {
     // Open file given in argument, and return editor created from file contents
 
     let reader = fs::File::open(Path::new(path));
     let mut file = reader.ok().expect("Unable to open file");
-    nc::Editor::from_file(file, window)
+    //nc::Editor::from_file(file, window)
+    gapnc::GapEditor::from_file(file, window)
 }
 
 fn save_to_file(filename: String, editor: &nc::Editor) -> Result<(), io::Error>{
@@ -278,8 +280,11 @@ fn main() {
     }
     */
     if args.len() == 1 {
+        /*
         path = String::new();
         editor = nc::Editor::blank(editor_window);
+        */
+        panic!("Empty Editor not implemented!");
     } else if args.len() == 2 {
         path = args[1].to_string();
         editor = open_file(editor_window, &path);
@@ -291,7 +296,8 @@ fn main() {
 
     draw_control_bar(ctrl_window);
     editor.display_at_frame_cursor();
-    editor.move_cursor_to(editor_window);
+    //editor.move_cursor_to(editor_window);
+    editor.move_cursor_to();
     //wrefresh(editor_window);
     refresh_all_windows(&windows);
 
@@ -299,16 +305,21 @@ fn main() {
     while true {
         match ch {
             Some(WchResult::KeyCode(KEY_DOWN)) => {
-                editor.scroll_down(false);
+                //editor.scroll_down(false);
+                editor.scroll_down();
             },
             Some(WchResult::KeyCode(KEY_UP)) => {
-                editor.scroll_up(false);
+                editor.scroll_up();
             },
             Some(WchResult::KeyCode(KEY_RIGHT)) => {
-                editor.scroll_right(false);
+                //editor.scroll_right(false);
+                //TODO Implement
+                break;
             },
             Some(WchResult::KeyCode(KEY_LEFT)) => {
-                editor.scroll_left(false);
+                //editor.scroll_left(false);
+                //TODO Implement
+                break;
             },
             Some(WchResult::Char(char_code)) => {
                 // Typed some character
@@ -316,14 +327,20 @@ fn main() {
                 match c {
                     '\n' => {
                         // Handle newlines separately
-                        editor.newline(false);
+                        //editor.newline(false);
+                        //TODO Implement
+                        break;
                     },
                     '\u{007F}' => {
                         // Handle backspaces separately
-                        editor.backspace(false);
+                        //editor.backspace(false);
+                        // TODO Implement
+                        break;
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break
+                        //TODO Implement
+                        /*
                         if editor.save_flag {
                             break;
                         } else if exit_loop(ctrl_window, &editor, &path) {
@@ -332,28 +349,39 @@ fn main() {
                             draw_control_bar(ctrl_window);
                             wrefresh(ctrl_window);
                         }
+                        */
+                        return;
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
+                        //TODO Implement
+                        /*
                         if save_loop(ctrl_window, &editor, &path) {
                             editor.set_save();
                         }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
+                        */
+                        break;
                     },
                     '\u{000B}' => {
                         // Ctrl-K -> cut
-                        editor.cut_line();
+                        //editor.cut_line();
+                        //TODO Implement
+                        break;
                     },
                     '\u{0015}' => {
                         // Ctrl-U -> paste
-                        editor.paste();
+                        //editor.paste();
+                        //TODO Implement
+                        break;
                     },
                     '\u{0001}'..='\u{001F}' => { // All other control keys
                         beep();
                     }
                     _ => {
-                        editor.type_character(c, false);
+                        //editor.type_character(c, false);
+                        break;
                     }
                 }
             },
@@ -363,7 +391,8 @@ fn main() {
         }
         werase(editor_window);
         editor.display_at_frame_cursor();
-        editor.move_cursor_to(editor_window);
+        //editor.move_cursor_to(editor_window);
+        editor.move_cursor_to();
         wrefresh(editor_window);
         //refresh_all_windows(&windows);
         ch = wget_wch(editor_window);
