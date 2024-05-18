@@ -214,8 +214,8 @@ impl GapBuffer {
         // Continue seeking actual lines until we match or
         // overshoot the number of display lines
         while y_count < n_lines {
-            let left_edge = self.get_left_edge(start);
-            let line_height = 1 + (start - left_edge) / width;
+            let left_edge = self.get_left_edge(pointer);
+            let line_height = 1 + (pointer - left_edge) / width;
             y_count += line_height;
             if left_edge == 0 {
                 // We've reached the top of the viewport, so
