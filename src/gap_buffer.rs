@@ -309,6 +309,10 @@ impl GapBuffer {
         // the new cursor position's x-position is
         // less than the previous line
 
+        if self.gap_position == self.len() {
+            return None;
+        }
+
         let left_edge = self.get_left_edge(self.gap_position);
         let right_edge = self.get_right_edge(self.gap_position);
         // What xpos the cursor is at
@@ -317,7 +321,7 @@ impl GapBuffer {
         if right_edge - self.gap_position > width && self.gap_position + width < self.len() {
             // next display line is the same actual line (and is in range)
             return Some((self.gap_position + width, false));
-        } else if right_edge != self.len() - 1 {
+        } else if right_edge < self.len() - 1 {
             let nl_left_edge = right_edge + 1;
             if let nl_right_edge = self.get_right_edge(nl_left_edge) {
                 if nl_right_edge <= xpos {
@@ -327,8 +331,12 @@ impl GapBuffer {
                     return Some((nl_left_edge + xpos, false));
                 }
             }
+        } else if xpos != 0 {
+            // We're on the last line
+            return Some((right_edge + 1, true));
+        } else {
+            return Some((right_edge + 1, false));
         }
-        // We're on the last line
         None
     }
 
