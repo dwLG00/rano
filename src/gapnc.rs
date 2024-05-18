@@ -27,7 +27,8 @@ pub struct GapEditor {
     smart_cursor_flag: bool,
     smart_cursor_pos: usize,
     // Select mode fields
-    select_mode_flag: bool,
+    select_mode_flag: bool, // This is true if there is text being actively or inactively selected
+    select_active: bool, // This is true only if we have just one anchor selected
     lmark_pos: usize,
     rmark_pos: usize,
     // Cut/Copy stuff
@@ -55,6 +56,7 @@ impl GapEditor {
             smart_cursor_flag: false,
             smart_cursor_pos: 0,
             select_mode_flag: false,
+            select_active: false,
             lmark_pos: 0,
             rmark_pos: 0,
             cut_buffer: Vec::<char>::new(),
@@ -152,7 +154,17 @@ impl GapEditor {
 
         let (height, width) = self.size;
 
+        /*
         self.frame_cursor = self.buffer.seek_back_n_display_lines(self.buffer.gap_position, height, width);
+        let (cur_y, cur_x) = self.buffer.count_yx(self.frame_cursor, self.buffer.gap_position, width);
+        Some((cur_y as i32, cur_x as i32))
+        */
+        self.put_on_nth_line(height)
+    }
+
+    pub fn put_on_nth_line(&mut self, linecount: usize) -> Option<(i32, i32)> {
+        let (height, width) = self.size;
+        self.frame_cursor = self.buffer.seek_back_n_display_lines(self.buffer.gap_position, linecount, width);
         let (cur_y, cur_x) = self.buffer.count_yx(self.frame_cursor, self.buffer.gap_position, width);
         Some((cur_y as i32, cur_x as i32))
     }
