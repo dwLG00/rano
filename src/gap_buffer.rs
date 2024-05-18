@@ -324,7 +324,10 @@ impl GapBuffer {
         } else if right_edge < self.len() - 1 {
             let nl_left_edge = right_edge + 1;
             if let nl_right_edge = self.get_right_edge(nl_left_edge) {
-                if nl_right_edge <= xpos {
+                // Next line is a hanging newline
+                if nl_right_edge == nl_left_edge {
+                    return Some((nl_left_edge, xpos != 0));
+                } else if nl_right_edge <= xpos {
                     // Next display position is less than the starting position
                     return Some((nl_right_edge - 1, true));
                 } else {
@@ -359,7 +362,9 @@ impl GapBuffer {
             let pl_height = 1 + (pl_right_edge - pl_left_edge) / width;
             let pl_xpos = (pl_right_edge - pl_left_edge) - (pl_height - 1) * width;
 
-            if pl_xpos < xpos {
+            if pl_right_edge == pl_left_edge {
+                return Some((pl_right_edge, xpos != 0));
+            } else if pl_xpos < xpos {
                 return Some((pl_right_edge - 1, true));
             } else {
                 return Some((pl_left_edge + (pl_height - 1) * width + xpos, false));

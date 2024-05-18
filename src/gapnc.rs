@@ -236,8 +236,8 @@ impl GapEditor {
         let (height, width) = self.size;
         let is_right_edge = self.buffer.gap_position == self.buffer.get_right_edge(self.buffer.gap_position);
 
-        if let Some(next) = self.buffer.get(self.buffer.gap_position + 1) {
-            // Increment gap buffer if the next position exists
+        if self.buffer.gap_position < self.buffer.len() {
+            // Increment gap buffer if the next position is in bound
             self.buffer.move_gap(self.buffer.gap_position + 1);
         }
 
