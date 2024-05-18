@@ -29,8 +29,8 @@ pub struct GapEditor {
     // Select mode fields
     select_mode_flag: bool, // This is true if there is text being actively or inactively selected
     select_active: bool, // This is true only if we have just one anchor selected
-    lmark_pos: usize,
-    rmark_pos: usize,
+    lmark: usize,
+    rmark: usize,
     // Cut/Copy stuff
     cut_buffer: Vec<char>,
     // Save flag
@@ -57,8 +57,8 @@ impl GapEditor {
             smart_cursor_pos: 0,
             select_mode_flag: false,
             select_active: false,
-            lmark_pos: 0,
-            rmark_pos: 0,
+            lmark: 0,
+            rmark: 0,
             cut_buffer: Vec::<char>::new(),
             save_flag: true
         }
@@ -107,8 +107,9 @@ impl GapEditor {
         // Sets select_mode_flag to false, and resets all marks
 
         self.select_mode_flag = false;
-        self.lmark_pos = 0;
-        self.rmark_pos = 0;
+        self.select_active = false;
+        self.lmark = 0;
+        self.rmark = 0;
     }
 
     pub fn move_cursor_to(&mut self) {
@@ -350,6 +351,51 @@ impl GapEditor {
         self.put_on_nth_line(height / 2);
         self.move_cursor_to();
 
+    }
+
+    pub fn set_mark(&mut self) {
+        // Sets the highlight mark
+
+        if !self.select_mode_flag {
+            // No selections right now
+            self.lmark = self.buffer.gap_position;
+            self.select_active = true; // We are actively selecting (i.e. the cursor acts as the second anchor)
+        } else if self.select_mode_flag && self.select_active {
+            // We are selecting with just one marker -> register
+            // the cursor position as the second marker
+            if self.lmark == self.buffer.gap_position {
+                // We're trying to re-select the mark -> toggle the selection
+                self.select_mode_flag = false;
+                self.select_active = false;
+                return;
+            }
+            self.rmark = self.buffer.gap_position; // Set the right marker
+            if self.rmark < self.lmark {
+                // Our cursor's position is before the left marker
+                // -> swap the two
+                let temp = self.lmark;
+                self.lmark = self.rmark;
+                self.rmark = temp;
+            }
+        } else if self.select_mode_flag && !self.select_active {
+            // We already have two markers
+
+            if self.buffer.gap_position == self.lmark {
+                self.select_active = true;
+                self.lmark = self.rmark;
+            } else if self.buffer.gap_position == self.rmark {
+                self.select_active = true;
+            } else if self.buffer.gap_position > self.rmark {
+                self.rmark = self.buffer.gap_position;
+            } else if self.buffer.gap_position < self.lmark {
+                self.lmark = self.buffer.gap_position;
+            } else {
+                // The cursor is between the left and right marks
+                // Temporary design choice: just set the rmark to
+                // the cursor
+                self.rmark = self.buffer.gap_position;
+            }
+        }
     }
 
     pub fn export(&self) -> String {
