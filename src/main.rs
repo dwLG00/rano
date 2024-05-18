@@ -319,8 +319,9 @@ fn main() {
             },
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 //editor.scroll_left(false);
+                editor.scroll_left();
                 //TODO Implement
-                break;
+                //break;
             },
             Some(WchResult::Char(char_code)) => {
                 // Typed some character

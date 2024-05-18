@@ -253,6 +253,20 @@ impl GapEditor {
     }
 
     pub fn scroll_left(&mut self) {
+        self.smart_cursor_flag = false;
+        let (height, width) = self.size;
+        let is_left_edge = self.buffer.get_left_edge(self.buffer.gap_position) == self.buffer.gap_position;
+
+        if self.buffer.gap_position > 0 {
+            self.buffer.move_gap(self.buffer.gap_position - 1);
+        }
+
+        if cursor_beginning(self.window) || cursor_top(self.window) && is_left_edge {
+            if let Some(new_frame_cursor) = self.buffer.get_prev_display_line_head(self.frame_cursor, width) {
+                self.frame_cursor = new_frame_cursor;
+            }
+        }
+        self.move_cursor_to();
     }
 }
 
