@@ -527,6 +527,19 @@ impl GapEditor {
 
     pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
         // Inserts buffer at cursor
+
+        // Handle moving the selected regions
+        if self.select_mode_flag && self.select_active {
+            self.deselect_marks();
+        } else if self.select_mode_flag {
+            if self.buffer.gap_position <= self.lmark {
+                self.lmark += buffer.len();
+            }
+            if self.buffer.gap_position <= self.rmark {
+                self.rmark += buffer.len();
+            }
+        }
+
         self.buffer.insert_buffer(buffer);
 
         // Cleanup
@@ -538,9 +551,10 @@ impl GapEditor {
     pub fn paste(&mut self) {
         // Pastes the cut buffer at the cursor position
         match self.clipboard.last() {
-            Some(buffer) => { self.buffer.insert_buffer(buffer); },
-            None => { beep(); }
+            Some(buffer) => { self.insert_buffer(&((*buffer).clone())); },
+            None => { beep(); return; }
         }
+        //self.insert_buffer(*buffer.clone());
     }
 
     pub fn export(&self) -> String {
