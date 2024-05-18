@@ -175,13 +175,16 @@ impl GapEditor {
 
         match new_text_cursor {
             Some((next_text_pos, less_than_xpos)) => {
+                // Move the gap buffer (i.e. text cursor to the right pos)
                 self.buffer.move_gap(next_text_pos);
                 if less_than_xpos && !self.smart_cursor_flag {
+                    // Set the smart cursor flag to the x position if needed
                     self.smart_cursor_flag = true;
                     self.smart_cursor_pos = current_xpos;
                 }
             },
             None => {
+                // We've hit the bottom display line
                 return;
             }
         }
@@ -194,6 +197,40 @@ impl GapEditor {
             }
         }
         // Move the ncurses display cursor
+        self.move_cursor_to();
+    }
+
+    pub fn scroll_up(&mut self) {
+        // Handle the cursor changes for scrolling up
+        let (height, width) = self.size;
+        let current_xpos = self.buffer.xpos(self.buffer.gap_position, width);
+
+        let new_text_cursor = if self.smart_cursor_flag {
+            self.buffer.seek_prev_line_with_xpos(width, self.smart_cursor_pos)
+        } else {
+            self.buffer.seek_prev_line(width)
+        };
+
+        match new_text_cursor {
+            Some((new_text_pos, less_than_xpos)) => {
+                self.buffer.move_gap(new_text_pos);
+                if less_than_xpos && !self.smart_cursor_flag {
+                    self.smart_cursor_flag = true;
+                    self.smart_cursor_pos = current_xpos;
+                }
+            },
+            None => {
+                // We've hit the top display line
+                return;
+            }
+        }
+
+        // If ncurses cursor is at the top, then try to scroll the entire viewframe up one line
+        if cursor_top(self.window) {
+            if let Some(new_frame_cursor) = self.buffer.get_prev_display_line_head(self.frame_cursor, width) {
+                self.frame_cursor = new_frame_cursor;
+            }
+        }
         self.move_cursor_to();
     }
 

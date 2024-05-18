@@ -224,6 +224,26 @@ impl GapBuffer {
         None
     }
 
+    pub fn get_prev_display_line_head(&self, start: usize, width: usize) -> Option<usize> {
+        // Gets the beginning of previous display line, or None if doesn't exist
+        let left_edge = self.get_left_edge(start);
+        if left_edge == 0 && start < width {
+            // We're already at the very top line
+            return None;
+        } else if start - left_edge >= width {
+            // We're on the 2nd+ display line of a single line
+            return Some(start - width);
+        } else {
+            // Seek the previous line, get the very last display line head
+            let pl_right_edge = left_edge - 1;
+            let pl_left_edge = self.get_left_edge(pl_right_edge);
+            let pl_full_lines = (pl_right_edge - pl_left_edge) / width;
+            return Some(pl_left_edge + pl_full_lines * width); // Add length of the fully-filled display lines
+        }
+        None
+        
+    }
+
     pub fn count_yx(&self, start: usize, end: usize, width: usize) -> (usize, usize) {
         // Count the position of `end`, if `start` was at (0, 0)
         assert!(start < self.len() && end < self.len());
@@ -273,6 +293,16 @@ impl GapBuffer {
         self.seek_next_line_with_xpos(width, xpos)
     }
 
+    pub fn seek_prev_line(&self, width: usize) -> Option<(usize, bool)> {
+        // Returns the index of the cursor one
+        // display line up, along with whether
+        // the new cursor position's x-position is
+        // less than the next line
+
+        let xpos = self.xpos(self.gap_position, width);
+        self.seek_prev_line_with_xpos(width, xpos)
+    }
+
     pub fn seek_next_line_with_xpos(&self, width: usize, xpos: usize) -> Option<(usize, bool)> {
         // Returns the index of the cursor one
         // display line down, along with whether
@@ -297,6 +327,47 @@ impl GapBuffer {
                     return Some((nl_left_edge + xpos, false));
                 }
             }
+        }
+        // We're on the last line
+        None
+    }
+
+    pub fn seek_prev_line_with_xpos(&self, width: usize, xpos: usize) -> Option<(usize, bool)> {
+        // Returns the index of the cursor one
+        // display line up, along with whether
+        // the new cursor position's x-position is
+        // less than the next line
+
+        let left_edge = self.get_left_edge(self.gap_position);
+        let right_edge = self.get_right_edge(self.gap_position);
+        // What xpos the cursor is at
+
+        if self.gap_position - left_edge > width {
+            // previous display line is the same actual line
+            return Some((self.gap_position - width, false));
+        } else if left_edge != 0 {
+            let pl_right_edge = left_edge - 1;
+            let pl_left_edge = self.get_left_edge(pl_right_edge);
+            let pl_height = 1 + (pl_right_edge - pl_left_edge) / width;
+            let pl_xpos = (pl_right_edge - pl_left_edge) - (pl_height - 1) * width;
+
+            if pl_xpos < xpos {
+                return Some((pl_right_edge - 1, true));
+            } else {
+                return Some((pl_left_edge + (pl_height - 1) * width + xpos, false));
+            }
+
+            /*
+            let pl_left_edge = right_edge + 1;
+            if let nl_right_edge = self.get_right_edge(nl_left_edge) {
+                if nl_right_edge <= xpos {
+                    // Next display position is less than the starting position
+                    return Some((nl_right_edge - 1, true));
+                } else {
+                    return Some((nl_left_edge + xpos, false));
+                }
+            }
+            */
         }
         // We're on the last line
         None
