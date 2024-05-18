@@ -287,6 +287,8 @@ impl GapEditor {
 
         self.buffer.insert(character);
         self.move_cursor_to();
+
+        self.set_save(); // Modified the buffer, set flag
     }
 
     pub fn newline(&mut self) {
@@ -294,6 +296,8 @@ impl GapEditor {
 
         self.buffer.insert('\n');
         self.move_cursor_to();
+
+        self.set_save(); // Modified the buffer, set flag
     }
 
     pub fn backspace(&mut self) {
@@ -304,6 +308,8 @@ impl GapEditor {
             None => { beep(); } // Trying to delete at head
         }
         self.move_cursor_to();
+
+        self.set_save(); // Modified the buffer, set flag
     }
 
     pub fn go_to_line(&mut self, n: usize) {
