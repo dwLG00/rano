@@ -11,6 +11,7 @@ use std::path::Path;
 use std::cmp::{min, max};
 //use crate::lines;
 use crate::gap_buffer;
+use crate::colors;
 
 type WindowYX = (usize, usize);
 
@@ -475,7 +476,9 @@ fn cursor_end(window: WINDOW, height: usize, width: usize) -> bool {
 
 fn waddch_with_highlight(window: WINDOW, ch: chtype) {
     // Add character with background highlighting
-    wattron(window, COLOR_PAIR(1)); // CP_HIGHLIGHT
+    //wattron(window, COLOR_PAIR(1)); // CP_HIGHLIGHT
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     waddch(window, ch);
-    wattroff(window, COLOR_PAIR(1));
+    //wattroff(window, COLOR_PAIR(1));
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
 }

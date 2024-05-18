@@ -11,6 +11,7 @@ mod gap_buffer;
 //mod lines;
 //mod nc;
 mod gapnc;
+mod colors;
 
 // Colors
 static CP_HIGHLIGHT: i16 = 1;
