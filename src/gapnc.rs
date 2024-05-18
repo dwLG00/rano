@@ -116,7 +116,7 @@ impl GapEditor {
         let (height, width) = self.size;
         if self.buffer.gap_position < self.frame_cursor {
             // text cursor is out of frame -> move the frame cursor to the text cursor!
-            self.frame_cursor = self.buffer.gap_position;
+            self.frame_cursor = self.buffer.get_left_edge(self.buffer.gap_position);
         } else {
             let mut new_x: i32 = 0;
             let mut new_y: i32 = 0;
@@ -299,7 +299,10 @@ impl GapEditor {
     pub fn backspace(&mut self) {
         self.smart_cursor_flag = false;
 
-        self.buffer.delete();
+        match self.buffer.pop() {
+            Some(_) => {},
+            None => { beep(); } // Trying to delete at head
+        }
         self.move_cursor_to();
     }
 

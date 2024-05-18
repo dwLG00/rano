@@ -120,13 +120,16 @@ impl GapBuffer {
         }
     }
 
-    pub fn delete(&mut self) {
+    pub fn pop(&mut self) -> Option<char> {
         // Removes the character behind gap position
         if self.gap_position == 0 {
-            panic!("Tried to delete character behind gap_position, but gap_position is 0!");
+            //panic!("Tried to delete character behind gap_position, but gap_position is 0!");
+            return None;
         }
 
-        if self.buffer[self.gap_position - 1] == '\n' {
+        let ch = self.buffer[self.gap_position - 1];
+
+        if ch == '\n' {
             self.current_line -= 1;
             self.n_lines -= 1;
         }
@@ -134,6 +137,7 @@ impl GapBuffer {
         self.buffer[self.gap_position - 1] = '\0';
         self.gap_position -= 1;
         self.gap_size += 1;
+        Some(ch)
     }
 
     pub fn get_left_edge(&self, start: usize) -> usize {
