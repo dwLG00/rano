@@ -429,6 +429,42 @@ impl GapEditor {
         }
     }
 
+    pub fn cut(&mut self) {
+        // Cuts the selected text, or if no text is
+        // selected, the current line
+
+        let (lmark, rmark) = if self.select_mode_flag && self.select_active {
+            // 1 mark -> use cursor as the other mark
+            if self.lmark < self.buffer.gap_position {
+                (self.lmark, self.buffer.gap_position)
+            } else {
+                (self.buffer.gap_position, self.lmark)
+            }
+        } else if self.select_mode_flag && !self.select_active {
+            // 2 marks -> just use the marks
+            (self.lmark, self.rmark)
+        } else {
+            // 0 marks -> Use the left and right edges
+            (self.buffer.get_left_edge(self.buffer.gap_position), self.buffer.get_right_edge(self.buffer.gap_position))
+        };
+
+        // Get the new cursor position
+        let new_cursor_pos = if self.buffer.gap_position < lmark {
+            self.buffer.gap_position
+            // Don't do anything
+        } else if self.buffer.gap_position > rmark {
+            // Shift the cursor back the width of
+            // the selected region
+            self.buffer.gap_position - (rmark - lmark + 1)
+        } else {
+            // Cursor is in between the two marks
+            lmark
+        };
+
+        self.cut_buffer.clear();
+        self.cut_buffer.extend_from_slice(&self.buffer.cut(lmark, rmark, new_cursor_pos));
+    }
+
     pub fn export(&self) -> String {
         self.buffer.export()
     }

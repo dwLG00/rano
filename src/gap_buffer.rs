@@ -140,6 +140,30 @@ impl GapBuffer {
         Some(ch)
     }
 
+    pub fn cut(&mut self, left: usize, right: usize, moveto: usize) -> Vec<char> {
+        // Cuts out the portion of the buffer given, and
+        // moves the cursor to the given position
+        assert!(left <= right);
+        assert!(left <= self.len());
+        assert!(right <= self.len());
+
+        // Don't count the very last selectable character
+        let l = if left == self.len() { self.len() - 1 } else { left };
+        let r = if right == self.len() { self.len() - 1 } else { right };
+
+        let mut buffer = Vec::<char>::new();
+
+        for i in l..=r {
+            self.move_gap(i + 1);
+            match self.pop() {
+                Some(c) => { buffer.push(c); },
+                None => { return buffer; }
+            }
+        }
+        self.move_gap(moveto);
+        buffer
+    }
+
     pub fn get_left_edge(&self, start: usize) -> usize {
         // Get index of the left edge (last character to the left
         // of start that is not a newline)
