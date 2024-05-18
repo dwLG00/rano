@@ -217,7 +217,12 @@ impl GapBuffer {
             let left_edge = self.get_left_edge(pointer);
             let line_height = 1 + (pointer - left_edge) / width;
             y_count += line_height;
-            if left_edge == 0 {
+            if left_edge == 0 && y_count >= n_lines {
+                // We would break out of the loop at this stage
+                // and add 1 back, so start from the top
+                pointer = 0;
+
+            } else if left_edge == 0 {
                 // We've reached the top of the viewport, so
                 // just return 0
                 return 0;
