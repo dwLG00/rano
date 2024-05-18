@@ -46,7 +46,7 @@ impl GapBuffer {
 
     pub fn move_gap(&mut self, new_pos: usize) {
         // Moves the gap of the gap buffer
-        assert!(new_pos < self.len());
+        assert!(new_pos <= self.len());
 
         if new_pos > self.gap_position {
             for i in self.gap_position..new_pos {
@@ -280,7 +280,7 @@ impl GapBuffer {
         // display line in the viewport
         let left_edge = self.get_left_edge(idx);
         let line_len = (idx + 1 - left_edge);
-        line_len - (line_len / width) * width // Acts as finding the remainder
+        line_len - (line_len / width) * width - 1 // Acts as finding the remainder
     }
 
     pub fn seek_next_line(&self, width: usize) -> Option<(usize, bool)> {
