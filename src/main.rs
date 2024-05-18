@@ -156,7 +156,7 @@ fn save_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool{
                         winsch(window, ' ' as chtype);
                         filename_buffer.pop();
                     },
-                    '\n' => {
+                    '\r' => {
                         // Enter
                         save_to_file(filename_buffer, editor);
                         ret = true;
@@ -296,7 +296,7 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
                         winsch(window, ' ' as chtype);
                         lineno_buffer.pop();
                     },
-                    '\n' => {
+                    '\r' => {
                         // Enter
                         match lineno_buffer.parse::<usize>() {
                             Ok(lineno) => { return Some(lineno) },
@@ -329,6 +329,82 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
     None
 }
+
+/*
+fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
+    // Handle UI sequence for going to a particular line
+
+    let mut max_x = 0;
+    let mut max_y = 0;
+    getmaxyx(window, &mut max_y, &mut max_x);
+
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
+
+    let ctrl_string = "Optn =>\t[Enter]  Go to Line\t[Up]  Select Previous\t[Down]  Select Next\t[Ctrl-C]  Quit".to_string();
+    let ctrl_string_len = ctrl_string.len();
+    let clipboard_select_string = "Clipboard: ".to_string();
+    let clipboard_select_string_len = clipboard_select_string.len();
+    mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
+    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    mvwaddstr(window, 0, 0, &(clipboard_select_string + &" ".repeat(max_x as usize - clipboard_select_string_len))).unwrap();
+    wmove(window, 0, clipboard_select_string_len as i32);
+    wrefresh(window);
+
+    let left_limit = clipboard_select_string_len as i32; // If cur_x == left_limit, prevent deletion
+    let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
+
+    let clipboard_maxlen = (right_limit - left_limit) as usize; // Limit the number of characters of the clipboard buffer displayed
+
+    let mut ch;
+    let mut ret: bool = false;
+    loop {
+        ch = wget_wch(window);
+        getyx(window, &mut cur_y, &mut cur_x); // Get current cursor location
+        match ch {
+            Some(WchResult::Char(char_code)) => {
+                let c = char::from_u32(char_code as u32).expect("Invalid char");
+                match c {
+                    '\u{0003}' => {
+                        // Ctrl-C
+                        break;
+                    },
+                    '\r' => {
+                        // Enter
+                        match lineno_buffer.parse::<usize>() {
+                            Ok(lineno) => { return Some(lineno) },
+                            Err(e) => {
+                                // We can't parse the buffer, throw an error
+                                beep();
+                            }
+                        }
+                        //
+                    },
+                    '\u{0001}'..='\u{001F}' => {
+                        beep();
+                    },
+                    _ => {
+                        if cur_x == right_limit {
+                            beep();
+                            continue;
+                        }
+
+                        waddch(window, c as chtype);
+                        lineno_buffer.push(c);
+                    }
+                }
+            },
+            _ => {break;}
+        }
+        wrefresh(window);
+    }
+    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+    None
+}
+*/
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
     // Refreshes all windows
