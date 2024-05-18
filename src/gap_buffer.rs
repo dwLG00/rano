@@ -64,10 +64,12 @@ impl GapBuffer {
 
         if new_pos > self.gap_position {
             for i in self.gap_position..new_pos {
-                let ch = self.buffer[i];
-                self.buffer[i] = self.buffer[i + self.gap_size];
-                self.buffer[i + self.gap_size] = ch;
+                let ch = self.buffer[i + self.gap_size];
+                self.buffer[i + self.gap_size] = self.buffer[i];
+                self.buffer[i] = ch;
                 if ch == '\n' {
+                    // We need to check the char after the gap,
+                    // because ch is null
                     self.current_line += 1;
                 }
             }
