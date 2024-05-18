@@ -429,11 +429,11 @@ impl GapEditor {
         }
     }
 
-    pub fn cut(&mut self) {
-        // Cuts the selected text, or if no text is
-        // selected, the current line
+    pub fn get_select_region(&self) -> (usize, usize) {
+        // Get the (inclusive) left and right
+        // bounds that are "selected"
 
-        let (lmark, rmark) = if self.select_mode_flag && self.select_active {
+        if self.select_mode_flag && self.select_active {
             // 1 mark -> use cursor as the other mark
             if self.lmark < self.buffer.gap_position {
                 (self.lmark, self.buffer.gap_position)
@@ -446,7 +446,14 @@ impl GapEditor {
         } else {
             // 0 marks -> Use the left and right edges
             (self.buffer.get_left_edge(self.buffer.gap_position), self.buffer.get_right_edge(self.buffer.gap_position))
-        };
+        }
+    }
+
+    pub fn cut(&mut self) {
+        // Cuts the selected text, or if no text is
+        // selected, the current line
+
+        let (lmark, rmark) = self.get_select_region();
 
         // Get the new cursor position
         let new_cursor_pos = if self.buffer.gap_position < lmark {
@@ -468,6 +475,20 @@ impl GapEditor {
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
+    }
+
+    pub fn copy(&mut self) {
+        // Copies the current selected region into buffer
+
+        if !self.select_mode_flag {
+            // If no text is selected, just beep
+            beep();
+            return;
+        }
+
+        let (lmark, rmark) = self.get_select_region();
+        self.cut_buffer.clear();
+        self.cut_buffer.extend_from_slice(&self.buffer.copy(lmark, rmark));
     }
 
     pub fn insert_buffer(&mut self, buffer: &Vec<char>) {

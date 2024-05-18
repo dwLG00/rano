@@ -164,6 +164,28 @@ impl GapBuffer {
         buffer
     }
 
+    pub fn copy(&self, left: usize, right: usize) -> Vec<char> {
+        // Copies out the portion of the buffer given
+        assert!(left <= right);
+        assert!(left <= self.len());
+        assert!(right <= self.len());
+
+        // Don't count the very last selectable character
+        let l = if left == self.len() { self.len() - 1 } else { left };
+        let r = if right == self.len() { self.len() - 1 } else { right };
+
+        let mut buffer = Vec::<char>::new();
+
+        for i in l..=r {
+            match self.get(i) {
+                Some(c) => { buffer.push(*c) },
+                None => { return buffer; }
+            }
+        }
+        buffer
+
+    }
+
     pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
         // Inserts the char buffer into the gap buffer
         // at the current cursor's location
