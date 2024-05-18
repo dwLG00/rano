@@ -346,6 +346,7 @@ fn main() {
     initscr();
     raw();
     noecho();
+    nonl();
 
     // Initialize Colors
     use_default_colors();
@@ -412,13 +413,14 @@ fn main() {
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 editor.scroll_left();
             },
+            Some(WchResult::KeyCode(KEY_ENTER)) => {
+                // Enter is a keycode now with nonl()
+                editor.newline();
+            },
             Some(WchResult::Char(char_code)) => {
                 // Typed some character
                 let c = char::from_u32(char_code as u32).expect("Invalid char");
                 match c {
-                    '\n' => {
-                        editor.newline();
-                    },
                     '\u{007F}' => {
                         // Handle backspaces separately
                         editor.backspace();
@@ -444,6 +446,10 @@ fn main() {
                         }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
+                    },
+                    '\u{000A}' => {
+                        // Ctrl-J -> copy
+                        editor.copy();
                     },
                     '\u{000B}' => {
                         // Ctrl-K -> cut
