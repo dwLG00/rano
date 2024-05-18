@@ -317,7 +317,7 @@ impl GapBuffer {
         if right_edge - self.gap_position > width && self.gap_position + width < self.len() {
             // next display line is the same actual line (and is in range)
             return Some((self.gap_position + width, false));
-        } else if right_edge != self.len() {
+        } else if right_edge != self.len() - 1 {
             let nl_left_edge = right_edge + 1;
             if let nl_right_edge = self.get_right_edge(nl_left_edge) {
                 if nl_right_edge <= xpos {

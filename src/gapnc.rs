@@ -232,13 +232,13 @@ impl GapEditor {
     }
 
     pub fn scroll_right(&mut self) {
+        self.smart_cursor_flag = false;
         let (height, width) = self.size;
-
         let is_right_edge = self.buffer.gap_position == self.buffer.get_right_edge(self.buffer.gap_position);
 
         if let Some(next) = self.buffer.get(self.buffer.gap_position + 1) {
+            // Increment gap buffer if the next position exists
             self.buffer.move_gap(self.buffer.gap_position + 1);
-            
         }
 
         // If ncurses cursor is at the bottom right corner, or on the bottom line
