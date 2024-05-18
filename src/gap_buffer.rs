@@ -4,6 +4,8 @@ use std::io::Read;
 pub struct GapBuffer {
     pub buffer: Vec<char>,
     pub gap_position: usize,
+    pub current_line: usize,
+    pub n_lines: usize,
     gap_size: usize,
     next_alloc_gap_size: usize
 }
@@ -16,6 +18,8 @@ impl GapBuffer {
         let mut buffer_str = String::new();
         file.read_to_string(&mut buffer_str);
 
+        let mut n_lines = 0;
+
         for _ in 0..gap_size {
             // Push null char for the gap buffer
             buffer.push('\0');
@@ -23,9 +27,19 @@ impl GapBuffer {
 
         for ch in buffer_str.chars() {
             buffer.push(ch);
+            if ch == '\n' {
+                n_lines += 1;
+            }
         }
 
-        GapBuffer { buffer: buffer, gap_position: 0, gap_size: gap_size, next_alloc_gap_size: gap_size * 2 }
+        GapBuffer {
+            buffer: buffer,
+            gap_position: 0,
+            current_line: 0,
+            n_lines: n_lines,
+            gap_size: gap_size,
+            next_alloc_gap_size: gap_size * 2
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -53,6 +67,9 @@ impl GapBuffer {
                 let ch = self.buffer[i];
                 self.buffer[i] = self.buffer[i + self.gap_size];
                 self.buffer[i + self.gap_size] = ch;
+                if ch == '\n' {
+                    self.current_line += 1;
+                }
             }
         } else if new_pos < self.gap_position {
             for i in (new_pos..self.gap_position).rev() {
@@ -60,6 +77,9 @@ impl GapBuffer {
                 let ch = self.buffer[i];
                 self.buffer[i] = self.buffer[i + self.gap_size];
                 self.buffer[i + self.gap_size] = ch;
+                if ch == '\n' {
+                    self.current_line -= 1;
+                }
             }
         } else {
             // Do nothing;
@@ -92,12 +112,21 @@ impl GapBuffer {
         self.buffer[self.gap_position] = ch;
         self.gap_position += 1;
         self.gap_size -= 1;
+        if ch == '\n' {
+            self.current_line += 1;
+            self.n_lines += 1;
+        }
     }
 
     pub fn delete(&mut self) {
         // Removes the character behind gap position
         if self.gap_position == 0 {
             panic!("Tried to delete character behind gap_position, but gap_position is 0!");
+        }
+
+        if self.buffer[self.gap_position - 1] == '\n' {
+            self.current_line -= 1;
+            self.n_lines -= 1;
         }
 
         self.buffer[self.gap_position - 1] = '\0';
