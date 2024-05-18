@@ -8,8 +8,8 @@ use std::io;
 use std::path::Path;
 use std::process;
 mod gap_buffer;
-mod lines;
-mod nc;
+//mod lines;
+//mod nc;
 mod gapnc;
 
 // Colors

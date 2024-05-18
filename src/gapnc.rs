@@ -9,7 +9,7 @@ use std::io::Read;
 use std::fs;
 use std::path::Path;
 use std::cmp::{min, max};
-use crate::lines;
+//use crate::lines;
 use crate::gap_buffer;
 
 type WindowYX = (usize, usize);
