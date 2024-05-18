@@ -413,14 +413,14 @@ fn main() {
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 editor.scroll_left();
             },
-            Some(WchResult::KeyCode(KEY_ENTER)) => {
-                // Enter is a keycode now with nonl()
-                editor.newline();
-            },
             Some(WchResult::Char(char_code)) => {
                 // Typed some character
                 let c = char::from_u32(char_code as u32).expect("Invalid char");
                 match c {
+                    '\r' => {
+                        // Enter
+                        editor.newline();
+                    },
                     '\u{007F}' => {
                         // Handle backspaces separately
                         editor.backspace();
