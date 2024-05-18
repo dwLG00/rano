@@ -81,10 +81,7 @@ impl GapEditor {
                 match ch {
                     '\n' => {
                         getyx(self.window, &mut cur_y, &mut cur_x);
-                        if cur_x == 0 {
-                        } else {
-                            wmove(self.window, cur_y + 1, 0);
-                        }
+                        wmove(self.window, cur_y + 1, 0);
                     },
                     _ => {
                         waddch(self.window, *ch as chtype);
