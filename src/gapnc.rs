@@ -309,6 +309,9 @@ impl GapEditor {
     pub fn go_to_line(&mut self, n: usize) {
         // Moves the cursor to the nth line
         if n > self.buffer.n_lines {
+            // Out of range!
+            beep();
+            return;
             panic!("line number out of range!");
         }
 
@@ -317,12 +320,18 @@ impl GapEditor {
             return;
         }
 
-        if n < self.buffer.gap_position {
+        if n < self.buffer.current_line {
             let mut pointer = self.buffer.get_left_edge(self.buffer.gap_position);
             for i in n..self.buffer.current_line {
                 pointer = self.buffer.get_left_edge(pointer - 1);
             }
             self.buffer.move_gap(pointer);
+            /*
+            match self.buffer.get(self.buffer.gap_position) {
+                Some(c) => {panic!("{}", c);},
+                _ => {}
+            }
+            */
         } else {
             let mut pointer = self.buffer.gap_position;
             for i in self.buffer.current_line..n {
