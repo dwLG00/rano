@@ -569,6 +569,11 @@ impl GapEditor {
         self.clipboard_cursor = Some(pos);
     }
 
+    pub fn get_clipboard_cursor(&self) -> Option<usize> {
+        // Getter
+        self.clipboard_cursor
+    }
+
     pub fn disable_clipboard(&mut self) {
         // Sets the clipboard cursor to None
         self.clipboard_cursor = None;

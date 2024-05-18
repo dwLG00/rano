@@ -5,6 +5,7 @@ use std::env;
 use std::io::{Read, Write};
 use std::fs;
 use std::io;
+use std::cmp::min;
 use std::path::Path;
 use std::process;
 mod gap_buffer;
@@ -330,7 +331,6 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
     None
 }
 
-/*
 fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
     // Handle UI sequence for going to a particular line
 
@@ -357,6 +357,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
     let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
 
     let clipboard_maxlen = (right_limit - left_limit) as usize; // Limit the number of characters of the clipboard buffer displayed
+    let mut clipboard_cursor = editor.get_clipboard_cursor();
 
     let mut ch;
     let mut ret: bool = false;
@@ -364,6 +365,12 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
         ch = wget_wch(window);
         getyx(window, &mut cur_y, &mut cur_x); // Get current cursor location
         match ch {
+            Some(WchResult::KeyCode(KEY_UP)) => {
+                // Get the previous clipboard entry
+            },
+            Some(WchResult::KeyCode(KEY_DOWN)) => {
+                // Get the next clipboard entry
+            },
             Some(WchResult::Char(char_code)) => {
                 let c = char::from_u32(char_code as u32).expect("Invalid char");
                 match c {
@@ -373,6 +380,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
                     },
                     '\r' => {
                         // Enter
+                        /*
                         match lineno_buffer.parse::<usize>() {
                             Ok(lineno) => { return Some(lineno) },
                             Err(e) => {
@@ -380,19 +388,11 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
                                 beep();
                             }
                         }
+                        */
                         //
                     },
-                    '\u{0001}'..='\u{001F}' => {
-                        beep();
-                    },
                     _ => {
-                        if cur_x == right_limit {
-                            beep();
-                            continue;
-                        }
-
-                        waddch(window, c as chtype);
-                        lineno_buffer.push(c);
+                        beep();
                     }
                 }
             },
@@ -404,7 +404,6 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
     None
 }
-*/
 
 fn refresh_all_windows(windows: &Vec<WINDOW>) {
     // Refreshes all windows
@@ -413,7 +412,40 @@ fn refresh_all_windows(windows: &Vec<WINDOW>) {
     }
 }
 
+// Various helpers
+fn display_with_cutoff(buffer: Vec<char>, cutoff: usize, dots: usize) -> String {
+    // Display the first `cutoff` characters.
+    // If the buffer contains a newline before the cutoff, end at the newline.
+    // If the buffer trails off, replace the last `dots` characters with ellipses
+    assert!(cutoff > dots);
 
+    let mut out_buffer = Vec::<char>::new();
+    for (i, ch) in buffer.iter().enumerate() {
+        if *ch != '\n' && i < cutoff {
+            out_buffer.push(*ch);
+        } else if i == cutoff {
+            if buffer.len() > cutoff {
+                for j in cutoff-dots..cutoff {
+                    // set ellipses
+                    out_buffer[j] = '.';
+                }
+            }
+            break;
+            //return out_buffer.into_iter().collect();
+        } else {
+            let out_buffer_len = out_buffer.len();
+            if i != buffer.len() - 1 {
+                // set ellipses
+                for j in min(out_buffer_len, dots)-dots..out_buffer_len {
+                    out_buffer[j] = '.';
+                }
+            }
+            break;
+            //return out_buffer.into_iter().collect();
+        }
+    }
+    return out_buffer.into_iter().collect();
+}
 
 // Main loop
 
