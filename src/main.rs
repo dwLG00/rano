@@ -313,8 +313,9 @@ fn main() {
             },
             Some(WchResult::KeyCode(KEY_RIGHT)) => {
                 //editor.scroll_right(false);
+                editor.scroll_right();
                 //TODO Implement
-                break;
+                //break;
             },
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 //editor.scroll_left(false);

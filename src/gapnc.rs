@@ -231,6 +231,29 @@ impl GapEditor {
         self.move_cursor_to();
     }
 
+    pub fn scroll_right(&mut self) {
+        let (height, width) = self.size;
+
+        let is_right_edge = self.buffer.gap_position == self.buffer.get_right_edge(self.buffer.gap_position);
+
+        if let Some(next) = self.buffer.get(self.buffer.gap_position + 1) {
+            self.buffer.move_gap(self.buffer.gap_position + 1);
+            
+        }
+
+        // If ncurses cursor is at the bottom right corner, or on the bottom line
+        // and at the end of the display line, then try to scroll the entire viewframe
+        // down one line
+        if cursor_end(self.window, height, width) || cursor_bottom(self.window, height) && is_right_edge {
+            if let Some(new_frame_cursor) = self.buffer.get_next_display_line_head(self.frame_cursor, width) {
+                self.frame_cursor = new_frame_cursor;
+            }
+        }
+        self.move_cursor_to();
+    }
+
+    pub fn scroll_left(&mut self) {
+    }
 }
 
 
@@ -258,4 +281,22 @@ fn cursor_bottom(window: WINDOW, height: usize) -> bool {
     let mut cur_y = 0;
     getyx(window, &mut cur_y, &mut cur_x);
     cur_y == (height - 1) as i32
+}
+
+fn cursor_beginning(window: WINDOW) -> bool {
+    // Returns whether the cursor is in the top left corner or not
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    getyx(window, &mut cur_y, &mut cur_x);
+    cur_y == 0 && cur_x == 0
+}
+
+fn cursor_end(window: WINDOW, height: usize, width: usize) -> bool {
+    // Returns whether the cursor is in the bottom right corner or not
+    let mut cur_x = 0;
+    let mut cur_y = 0;
+
+    getyx(window, &mut cur_y, &mut cur_x);
+    cur_y == (height - 1) as i32 && cur_x == (width - 1) as i32
 }
