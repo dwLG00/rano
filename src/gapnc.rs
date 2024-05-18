@@ -34,6 +34,7 @@ pub struct GapEditor {
     rmark: usize,
     // Cut/Copy stuff
     clipboard: Vec<Vec<char>>,
+    clipboard_cursor: Option<usize>,
     // Save flag
     pub save_flag: bool
 }
@@ -61,6 +62,7 @@ impl GapEditor {
             lmark: 0,
             rmark: 0,
             clipboard: Vec::<Vec<char>>::new(),
+            clipboard_cursor: None,
             save_flag: true
         }
     }
@@ -505,6 +507,7 @@ impl GapEditor {
         };
 
         self.clipboard.push(self.buffer.cut(lmark, rmark, new_cursor_pos));
+        self.clipboard_cursor = Some(self.clipboard.len() - 1);
 
         // Cleanup
         self.smart_cursor_flag = false;
@@ -523,6 +526,7 @@ impl GapEditor {
 
         let (lmark, rmark) = self.get_select_region();
         self.clipboard.push(self.buffer.copy(lmark, rmark));
+        self.clipboard_cursor = Some(self.clipboard.len() - 1);
     }
 
     pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
@@ -550,9 +554,11 @@ impl GapEditor {
 
     pub fn paste(&mut self) {
         // Pastes the cut buffer at the cursor position
-        match self.clipboard.last() {
-            Some(buffer) => { self.insert_buffer(&((*buffer).clone())); },
-            None => { beep(); return; }
+        if let Some(clipboard_cursor) = self.clipboard_cursor {
+            match self.clipboard.get(clipboard_cursor) {
+                Some(buffer) => { self.insert_buffer(&((*buffer).clone())); },
+                None => { beep(); return; }
+            }
         }
         //self.insert_buffer(*buffer.clone());
     }
