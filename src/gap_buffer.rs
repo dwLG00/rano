@@ -277,7 +277,8 @@ impl GapBuffer {
 
     pub fn count_yx(&self, start: usize, end: usize, width: usize) -> (usize, usize) {
         // Count the position of `end`, if `start` was at (0, 0)
-        assert!(start < self.len() && end < self.len());
+        assert!(start <= self.len());
+        assert!(end <= self.len());
 
         let mut cur_y = 0;
         let mut cur_x = 0;
