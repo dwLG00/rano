@@ -307,6 +307,18 @@ impl GapEditor {
         // Handles typing a character
         self.smart_cursor_flag = false;
 
+        // Handle moving the selected regions
+        if self.select_mode_flag && self.select_active {
+            self.deselect_marks();
+        } else if self.select_mode_flag {
+            if self.buffer.gap_position <= self.lmark {
+                self.lmark += 1;
+            }
+            if self.buffer.gap_position <= self.rmark {
+                self.rmark += 1;
+            }
+        }
+
         self.buffer.insert(character);
         self.move_cursor_to();
 
@@ -316,6 +328,18 @@ impl GapEditor {
     pub fn newline(&mut self) {
         self.smart_cursor_flag = false;
 
+        // Handle moving the selected regions
+        if self.select_mode_flag && self.select_active {
+            self.deselect_marks();
+        } else if self.select_mode_flag {
+            if self.buffer.gap_position <= self.lmark {
+                self.lmark += 1;
+            }
+            if self.buffer.gap_position <= self.rmark {
+                self.rmark += 1;
+            }
+        }
+
         self.buffer.insert('\n');
         self.move_cursor_to();
 
@@ -324,6 +348,18 @@ impl GapEditor {
 
     pub fn backspace(&mut self) {
         self.smart_cursor_flag = false;
+
+        // Handle moving the selected regions
+        if self.select_mode_flag && self.select_active {
+            self.deselect_marks();
+        } else if self.select_mode_flag {
+            if self.buffer.gap_position <= self.lmark {
+                self.lmark -= 1;
+            }
+            if self.buffer.gap_position <= self.rmark {
+                self.rmark -= 1;
+            }
+        }
 
         match self.buffer.pop() {
             Some(_) => {},
