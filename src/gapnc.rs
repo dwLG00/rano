@@ -403,6 +403,13 @@ impl GapEditor {
         } else if self.select_mode_flag && !self.select_active {
             // We already have two markers
 
+            // Remove all anchors and start selecting from
+            // the cursor position
+            self.lmark = self.buffer.gap_position;
+            self.rmark = 0; // erase
+            self.select_active = true;
+
+            /*
             if self.buffer.gap_position == self.lmark {
                 self.select_active = true;
                 self.lmark = self.rmark;
@@ -418,6 +425,7 @@ impl GapEditor {
                 // the cursor
                 self.rmark = self.buffer.gap_position;
             }
+            */
         }
     }
 
