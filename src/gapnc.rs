@@ -31,6 +31,7 @@ pub struct GapEditor {
     // Select mode fields
     select_mode_flag: bool, // This is true if there is text being actively or inactively selected
     select_active: bool, // This is true only if we have just one anchor selected
+    select_shift: bool, // This checks if selecting using shift is active
     lmark: usize,
     rmark: usize,
     // Cut/Copy stuff
@@ -62,6 +63,7 @@ impl GapEditor {
             smart_cursor_pos: 0,
             select_mode_flag: false,
             select_active: false,
+            select_shift: false,
             lmark: 0,
             rmark: 0,
             clipboard: Vec::<Vec<char>>::new(),
@@ -135,6 +137,7 @@ impl GapEditor {
 
         self.select_mode_flag = false;
         self.select_active = false;
+        self.select_shift = false;
         self.lmark = 0;
         self.rmark = 0;
     }
@@ -500,6 +503,15 @@ impl GapEditor {
             // 0 marks -> Use the left and right edges
             (self.buffer.get_left_edge(self.buffer.gap_position), self.buffer.get_right_edge(self.buffer.gap_position))
         }
+    }
+
+    pub fn set_select_shift(&mut self) {
+        self.select_shift = true;
+    }
+
+    pub fn is_shift_selected(&self) -> bool {
+        // Checks if current selection is shift-selected
+        self.select_mode_flag && self.select_shift
     }
 
     pub fn cut(&mut self) {
