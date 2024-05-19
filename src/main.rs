@@ -14,6 +14,11 @@ mod gap_buffer;
 mod gapnc;
 mod colors;
 
+// Missing keycodes
+const KEY_SDOWN: i32 = 336;
+const KEY_SUP: i32 = 337;
+
+
 // File IO
 
 fn open_file(window: WINDOW, path: &str) -> gapnc::GapEditor {
@@ -562,28 +567,61 @@ fn main() {
         match ch {
             // Arrow keys
             Some(WchResult::KeyCode(KEY_DOWN)) => {
+                if editor.is_shift_selected() {
+                    editor.deselect_marks();
+                }
                 editor.scroll_down();
             },
             Some(WchResult::KeyCode(KEY_UP)) => {
+                if editor.is_shift_selected() {
+                    editor.deselect_marks();
+                }
                 editor.scroll_up();
             },
             Some(WchResult::KeyCode(KEY_RIGHT)) => {
+                if editor.is_shift_selected() {
+                    editor.deselect_marks();
+                }
                 editor.scroll_right();
             },
             Some(WchResult::KeyCode(KEY_LEFT)) => {
+                if editor.is_shift_selected() {
+                    editor.deselect_marks();
+                }
                 editor.scroll_left();
             },
-            Some(WchResult::KeyCode(KEY_SLEFT)) => {
-                beep();
-            },
-            Some(WchResult::KeyCode(KEY_SRIGHT)) => {
-                beep();
+            Some(WchResult::KeyCode(KEY_SDOWN)) => {
+                if !editor.is_shift_selected() {
+                    editor.set_mark();
+                    editor.set_select_shift();
+                }
+                editor.scroll_down();
+                //panic!("{} {} {} {}", KEY_SDOWN, KEY_SUP, KEY_SRIGHT, KEY_SLEFT);
             },
             Some(WchResult::KeyCode(KEY_SUP)) => {
-                beep();
+                if !editor.is_shift_selected() {
+                    editor.set_mark();
+                    editor.set_select_shift();
+                }
+                editor.scroll_up();
             },
-            Some(WchResult::KeyCode(KEY_SDOWN)) => {
-                beep();
+            Some(WchResult::KeyCode(KEY_SRIGHT)) => {
+                if !editor.is_shift_selected() {
+                    editor.set_mark();
+                    editor.set_select_shift();
+                }
+                editor.scroll_right();
+            },
+            Some(WchResult::KeyCode(KEY_SLEFT)) => {
+                if !editor.is_shift_selected() {
+                    editor.set_mark();
+                    editor.set_select_shift();
+                }
+                editor.scroll_left();
+            },
+            // Unrecognized keycode
+            Some(WchResult::KeyCode(code)) => {
+                panic!("Got keycode: {:?}", code);
             }
             // Actual characters + Ctrl keys
             Some(WchResult::Char(char_code)) => {
