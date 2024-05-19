@@ -560,6 +560,7 @@ fn main() {
     let mut ch = wget_wch(editor_window);
     while true {
         match ch {
+            // Arrow keys
             Some(WchResult::KeyCode(KEY_DOWN)) => {
                 editor.scroll_down();
             },
@@ -572,6 +573,19 @@ fn main() {
             Some(WchResult::KeyCode(KEY_LEFT)) => {
                 editor.scroll_left();
             },
+            Some(WchResult::KeyCode(KEY_SLEFT)) => {
+                beep();
+            },
+            Some(WchResult::KeyCode(KEY_SRIGHT)) => {
+                beep();
+            },
+            Some(WchResult::KeyCode(KEY_SUP)) => {
+                beep();
+            },
+            Some(WchResult::KeyCode(KEY_SDOWN)) => {
+                beep();
+            }
+            // Actual characters + Ctrl keys
             Some(WchResult::Char(char_code)) => {
                 // Typed some character
                 let c = char::from_u32(char_code as u32).expect("Invalid char");
