@@ -14,9 +14,6 @@ mod gap_buffer;
 mod gapnc;
 mod colors;
 
-// Colors
-static CP_HIGHLIGHT: i16 = 1;
-
 // File IO
 
 fn open_file(window: WINDOW, path: &str) -> gapnc::GapEditor {
@@ -91,9 +88,9 @@ fn draw_control_bar(window: WINDOW) {
     getmaxyx(window, &mut max_y, &mut max_x);
 
     //mvwaddstr(window, 0, 0, &"\u{2593}".repeat(max_x as usize)).unwrap();
-    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
-    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     let ctrl_string = "HELP =>\t[Ctrl-X]  Quit\t[Ctrl-O]  Save\t[Ctrl-K]  Cut\t[Ctrl-J]  Copy\t[Ctrl-U]  Paste\t[Ctrl-I]  Clipboard\t[Ctrl-/]  Go To Line\t[Ctrl-L]  Set Mark".to_string();
     let ctrl_string_len = ctrl_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
@@ -118,7 +115,7 @@ fn save_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool{
     let file_input_string = "File Name to Write: ".to_string();
     let file_input_string_len = file_input_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
-    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &(file_input_string + &" ".repeat(max_x as usize - file_input_string_len))).unwrap();
     wmove(window, 0, file_input_string_len as i32);
     waddstr(window, &path).unwrap();
@@ -184,7 +181,7 @@ fn save_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool{
         }
         wrefresh(window);
     }
-    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
     ret
 }
@@ -207,7 +204,7 @@ fn exit_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool {
     let buffer_query_string = "Save modified buffer?".to_string();
     let buffer_query_string_len = buffer_query_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
-    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &(buffer_query_string + &" ".repeat(max_x as usize - buffer_query_string_len))).unwrap();
     wmove(window, 0, buffer_query_string_len as i32 + 1);
     wrefresh(window);
@@ -220,7 +217,7 @@ fn exit_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool {
                 let c = char::from_u32(char_code as u32).expect("Invalid character");
                 match c {
                     'y' => {
-                        wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+                        wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
                         return save_loop(window, editor, path); // Cancel the exit if the save is also cancelled
                     },
                     'n' => {
@@ -259,7 +256,7 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
     let lineno_input_string = "Go to Line Number: ".to_string();
     let lineno_input_string_len = lineno_input_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
-    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &(lineno_input_string + &" ".repeat(max_x as usize - lineno_input_string_len))).unwrap();
     wmove(window, 0, lineno_input_string_len as i32);
     wrefresh(window);
@@ -326,7 +323,7 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
         }
         wrefresh(window);
     }
-    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
     None
 }
@@ -349,7 +346,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
     let clipboard_select_string = "Clipboard: ".to_string();
     let clipboard_select_string_len = clipboard_select_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
-    wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &(clipboard_select_string + &" ".repeat(max_x as usize - clipboard_select_string_len))).unwrap();
     wmove(window, 0, clipboard_select_string_len as i32); // This is the position right after the clipboard select string
 
@@ -439,7 +436,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
         }
         wrefresh(window);
     }
-    wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
     None
 }
@@ -513,7 +510,7 @@ fn main() {
     // Initialize Colors
     use_default_colors();
     start_color();
-    init_pair(CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
+    init_pair(colors::CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
 
     // Create windows
     let mut windows = Vec::new();
