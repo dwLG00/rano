@@ -94,7 +94,7 @@ fn draw_control_bar(window: WINDOW) {
     wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
     wattroff(window, COLOR_PAIR(CP_HIGHLIGHT));
-    let ctrl_string = "HELP =>\t[Ctrl-X]  Quit\t[Ctrl-O]  Save\t[Ctrl-K]  Cut\t[Ctrl-J]  Copy\t[Ctrl-U]  Paste\t[Ctrl-/]  Go To Line\t[Ctrl-L]  Set Mark".to_string();
+    let ctrl_string = "HELP =>\t[Ctrl-X]  Quit\t[Ctrl-O]  Save\t[Ctrl-K]  Cut\t[Ctrl-J]  Copy\t[Ctrl-U]  Paste\t[Ctrl-I]  Clipboard\t[Ctrl-/]  Go To Line\t[Ctrl-L]  Set Mark".to_string();
     let ctrl_string_len = ctrl_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
@@ -605,6 +605,15 @@ fn main() {
                         // Ctrl-O -> save loop
                         if save_loop(ctrl_window, &editor, &path) {
                             editor.set_save();
+                        }
+                        draw_control_bar(ctrl_window);
+                        wrefresh(ctrl_window);
+                    },
+                    '\u{0009}' => {
+                        // Ctrl-I -> clipboard
+                        match clipboard_select_loop(ctrl_window, &editor) {
+                            Some(new_clipboard_cursor) => { editor.set_clipboard_cursor(new_clipboard_cursor) },
+                            None => {}
                         }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
