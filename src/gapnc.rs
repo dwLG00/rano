@@ -15,7 +15,7 @@ use crate::colors;
 
 type WindowYX = (usize, usize);
 
-const INIT_GAP_SIZE: usize = 1024;
+const INIT_GAP_SIZE: usize = 1024; // This is probably good enough for us to last us for a while
 
 pub struct GapEditor {
     buffer: gap_buffer::GapBuffer,
@@ -572,6 +572,16 @@ impl GapEditor {
     pub fn get_clipboard_cursor(&self) -> Option<usize> {
         // Getter
         self.clipboard_cursor
+    }
+
+    pub fn get_clipboard(&self, pos: usize) -> Option<&Vec<char>> {
+        // Get the clipboard string at position
+        assert!(pos < self.clipboard.len());
+        self.clipboard.get(pos)
+    }
+
+    pub fn clipboard_len(&self) -> usize {
+        self.clipboard.len()
     }
 
     pub fn disable_clipboard(&mut self) {

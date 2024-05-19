@@ -331,8 +331,9 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
     None
 }
 
-fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
+fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize>{
     // Handle UI sequence for going to a particular line
+    // Returns an Option<usize> of the new clipboard position
 
     let mut max_x = 0;
     let mut max_y = 0;
@@ -350,14 +351,25 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
     wattron(window, COLOR_PAIR(CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &(clipboard_select_string + &" ".repeat(max_x as usize - clipboard_select_string_len))).unwrap();
-    wmove(window, 0, clipboard_select_string_len as i32);
-    wrefresh(window);
+    wmove(window, 0, clipboard_select_string_len as i32); // This is the position right after the clipboard select string
 
+    // Get the initial clipboard string
     let left_limit = clipboard_select_string_len as i32; // If cur_x == left_limit, prevent deletion
     let right_limit = max_x - 1; // If cur_x == max_x, prevent character addition
 
     let clipboard_maxlen = (right_limit - left_limit) as usize; // Limit the number of characters of the clipboard buffer displayed
-    let mut clipboard_cursor = editor.get_clipboard_cursor();
+    let mut clipboard_cursor = match editor.get_clipboard_cursor() {
+        Some(i) => i,
+        None => { return None; }
+    };
+    let mut clipboard_string = match editor.get_clipboard(clipboard_cursor) {
+        Some(buffer) => pad(display_with_cutoff(buffer.to_vec(), clipboard_maxlen, 3), clipboard_maxlen),
+        None => pad(String::new(), clipboard_maxlen)
+    };
+
+    waddstr(window, &clipboard_string);
+    wrefresh(window);
+
 
     let mut ch;
     let mut ret: bool = false;
@@ -366,9 +378,35 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
         getyx(window, &mut cur_y, &mut cur_x); // Get current cursor location
         match ch {
             Some(WchResult::KeyCode(KEY_UP)) => {
+                if clipboard_cursor == 0 {
+                    // We've reached the oldest clipboard entry
+                    beep();
+                    continue;
+                }
+                clipboard_cursor -= 1;
+                clipboard_string = match editor.get_clipboard(clipboard_cursor) {
+                    Some(buffer) => pad(display_with_cutoff(buffer.to_vec(), clipboard_maxlen, 3), clipboard_maxlen),
+                    None => pad(String::new(), clipboard_maxlen)
+                };
+                wmove(window, 0, clipboard_select_string_len as i32);
+                waddstr(window, &clipboard_string);
+                wmove(window, 0, clipboard_select_string_len as i32);
                 // Get the previous clipboard entry
             },
             Some(WchResult::KeyCode(KEY_DOWN)) => {
+                if clipboard_cursor == editor.clipboard_len() - 1 {
+                    // We've reached the newest clipboard entry
+                    beep();
+                    continue;
+                }
+                clipboard_cursor += 1;
+                clipboard_string = match editor.get_clipboard(clipboard_cursor) {
+                    Some(buffer) => pad(display_with_cutoff(buffer.to_vec(), clipboard_maxlen, 3), clipboard_maxlen),
+                    None => pad(String::new(), clipboard_maxlen)
+                };
+                wmove(window, 0, clipboard_select_string_len as i32);
+                waddstr(window, &clipboard_string);
+                wmove(window, 0, clipboard_select_string_len as i32);
                 // Get the next clipboard entry
             },
             Some(WchResult::Char(char_code)) => {
@@ -379,6 +417,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
                         break;
                     },
                     '\r' => {
+                        return Some(clipboard_cursor);
                         // Enter
                         /*
                         match lineno_buffer.parse::<usize>() {
@@ -445,6 +484,21 @@ fn display_with_cutoff(buffer: Vec<char>, cutoff: usize, dots: usize) -> String 
         }
     }
     return out_buffer.into_iter().collect();
+}
+
+fn pad(string: String, length: usize) -> String {
+    // Right pad a string with spaces
+    assert!(string.len() <= length);
+    if string.len() == length {
+        string
+    } else {
+        let mut outstring = string.clone();
+        let padby = length - string.len();
+        for _ in 0..padby {
+            outstring.push(' ');
+        }
+        outstring
+    }
 }
 
 // Main loop
