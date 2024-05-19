@@ -37,7 +37,7 @@ pub struct Editor {
     // Cut/Copy stuff
     cut_buffer: Vec<char>,
     // Save flag
-    pub save_flag: bool
+    pub save_flag: bool,
 }
 
 impl Editor {
@@ -81,7 +81,8 @@ impl Editor {
             lmark_pos: (None, 0),
             rmark_pos: (None, 0),
             cut_buffer: Vec::new(),
-            save_flag: true
+            save_flag: true,
+            tab_size: TAB_SIZE
         }
     }
 

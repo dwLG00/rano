@@ -580,6 +580,9 @@ fn main() {
                         // Enter
                         editor.newline();
                     },
+                    '\t' => {
+                        editor.tab();
+                    },
                     '\u{007F}' => {
                         // Handle backspaces separately
                         editor.backspace();

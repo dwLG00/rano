@@ -16,6 +16,7 @@ use crate::colors;
 type WindowYX = (usize, usize);
 
 const INIT_GAP_SIZE: usize = 1024; // This is probably good enough for us to last us for a while
+const TAB_SIZE: usize = 4; // Move this into a config file soon
 
 pub struct GapEditor {
     buffer: gap_buffer::GapBuffer,
@@ -36,7 +37,9 @@ pub struct GapEditor {
     clipboard: Vec<Vec<char>>,
     clipboard_cursor: Option<usize>,
     // Save flag
-    pub save_flag: bool
+    pub save_flag: bool,
+    // Other configurations
+    tab_size: usize
 }
 
 impl GapEditor {
@@ -63,7 +66,8 @@ impl GapEditor {
             rmark: 0,
             clipboard: Vec::<Vec<char>>::new(),
             clipboard_cursor: None,
-            save_flag: true
+            save_flag: true,
+            tab_size: TAB_SIZE
         }
     }
 
@@ -346,6 +350,17 @@ impl GapEditor {
         self.move_cursor_to();
 
         self.set_save(); // Modified the buffer, set flag
+    }
+
+    pub fn tab(&mut self) {
+        self.smart_cursor_flag = false;
+        let (_, width) = self.size;
+        let line_pos = self.buffer.gap_position - self.buffer.get_left_edge(self.buffer.gap_position);
+        let display_line_pos = line_pos - (line_pos / width) * width;
+        let mod_tabs = display_line_pos - (display_line_pos / self.tab_size) * self.tab_size;
+        for i in 0..(self.tab_size - mod_tabs) {
+            self.type_character(' '); // We want spaces instead of tabs
+        }
     }
 
     pub fn backspace(&mut self) {
