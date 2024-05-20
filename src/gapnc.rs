@@ -739,8 +739,8 @@ impl GapEditor {
     }
 
     pub fn find_raw(&self, search_string: String, start: usize) -> Option<Range> {
-        // Searches the entire buffer and finds
-        // the index of first search result
+        // Searches the buffer from `start` and finds
+        // the range of first search result
         let re = match Regex::new(&search_string) {
             Ok(regex) => regex,
             Err(e) => { return None; }
@@ -748,6 +748,26 @@ impl GapEditor {
         match re.find(&self.export()[start..]) {
             Some(m) => Some((m.start(), m.end())),
             None => None
+        }
+    }
+
+    pub fn find_all(&mut self, search_string: String, start: usize) {
+        // Searches the buffer from `start` and finds
+        // every range and adds it to search_hits
+        let re = match Regex::new(&search_string) {
+            Ok(regex) => regex,
+            Err(e) => { return; }
+        };
+        let mut flag = false;
+        for m in re.find_iter(&self.export()[start..]) {
+            if !flag {
+                let start = m.start();
+                self.buffer.move_gap(start);
+                self.move_cursor_to();
+                flag = true;
+            }
+            let range = (m.start(), m.end());
+            self.search_hits.push(range);
         }
     }
 
