@@ -376,7 +376,12 @@ impl GapBuffer {
         // display line in the viewport
         let left_edge = self.get_left_edge(idx);
         let line_len = (idx + 1 - left_edge);
-        line_len - (line_len / width) * width - 1 // Acts as finding the remainder
+        if line_len / width * width == line_len {
+            // Line_len is divisible by width
+            width - 1
+        } else {
+            line_len - (line_len / width) * width - 1 // Acts as finding the remainder
+        }
     }
 
     pub fn seek_next_line(&self, width: usize) -> Option<(usize, bool)> {

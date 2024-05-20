@@ -460,11 +460,15 @@ fn display_with_cutoff(buffer: Vec<char>, cutoff: usize, dots: usize) -> String 
     // If the buffer trails off, replace the last `dots` characters with ellipses
     assert!(cutoff > dots);
 
+    //panic!("{:?}", buffer);
+
     let mut out_buffer = Vec::<char>::new();
     for (i, ch) in buffer.iter().enumerate() {
-        if *ch != '\n' && i < cutoff {
+        if *ch != '\n' && out_buffer.len() < cutoff {
+            // Not at cutoff, not a newline -> Add it to the buffer
             out_buffer.push(*ch);
-        } else if i == cutoff {
+        } else if out_buffer.len() >= cutoff {
+            // At the cutoff -> Replace last few characters with dots, return
             if buffer.len() > cutoff {
                 for j in cutoff-dots..cutoff {
                     // set ellipses
@@ -473,11 +477,12 @@ fn display_with_cutoff(buffer: Vec<char>, cutoff: usize, dots: usize) -> String 
             }
             break;
             //return out_buffer.into_iter().collect();
+        } else if out_buffer.len() == 0 {
+            // First character is a newline -> ignore it
         } else {
-            let out_buffer_len = out_buffer.len();
             if i != buffer.len() - 1 {
-                // set ellipses
-                for j in min(out_buffer_len, dots)-dots..out_buffer_len {
+                // there's more text; set ellipses
+                for j in out_buffer.len()-dots..out_buffer.len() {
                     out_buffer[j] = '.';
                 }
             }
