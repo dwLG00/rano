@@ -8,6 +8,7 @@ use std::io;
 use std::cmp::min;
 use std::path::Path;
 use std::process;
+use regex::Regex;
 mod gap_buffer;
 //mod lines;
 //mod nc;
@@ -396,7 +397,7 @@ fn search_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<String> {
                     },
                     '\r' => {
                         // Enter
-                        return Some(search_buffer);
+                        return Some(escape_regex(search_buffer)?);
                     },
                     '\u{0001}'..='\u{001F}' => {
                         beep();
@@ -594,6 +595,12 @@ fn pad(string: String, length: usize) -> String {
         }
         outstring
     }
+}
+
+fn escape_regex(string: String) -> Option<String> {
+    // Escapes all characters in string
+    let re = Regex::new(r"(?<m>[.*+?^${}()|\[\]\\])").unwrap();
+    Some(re.replace_all(&string, r"\${m}").to_string())
 }
 
 // Main loop
@@ -803,6 +810,7 @@ fn main() {
                         // Ctrl-W -> Find
                         match search_loop(ctrl_window, &editor) {
                             Some(search_string) => {
+                                //panic!("Search: {:?}", search_string);
                                 editor.clear_search();
                                 //editor.find_all(search_string, editor.pos());
                                 editor.find_all(search_string, 0);
