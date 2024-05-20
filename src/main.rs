@@ -96,7 +96,7 @@ fn draw_control_bar(window: WINDOW) {
     wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
     wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
-    let ctrl_string = "HELP =>\t[Ctrl-X]  Quit\t[Ctrl-O]  Save\t[Ctrl-K]  Cut\t[Ctrl-J]  Copy\t[Ctrl-U]  Paste\t[Ctrl-I]  Clipboard\t[Ctrl-/]  Go To Line\t[Ctrl-L]  Set Mark".to_string();
+    let ctrl_string = "[^X] Quit\t[^O] Save\t[^K] Cut\t[^J] Copy\t[^U] Paste\t[^P] Clipboard\t[^/] Go To Line\t[^L] Set Mark".to_string();
     let ctrl_string_len = ctrl_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
@@ -115,7 +115,7 @@ fn save_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool{
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
 
-    let ctrl_string = "Optn =>\t[Enter]  Save\t[Ctrl-C]  Quit".to_string();
+    let ctrl_string = "[Enter] Save\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let file_input_string = "File Name to Write: ".to_string();
     let file_input_string_len = file_input_string.len();
@@ -204,7 +204,7 @@ fn exit_loop(window: WINDOW, editor: &gapnc::GapEditor, path: &String) -> bool {
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
 
-    let ctrl_string = "Optn =>\t[Y]  Yes\t[N]  No\t[Ctrl-C]  Cancel".to_string();
+    let ctrl_string = "[Y] Yes\t[N] No\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let buffer_query_string = "Save modified buffer?".to_string();
     let buffer_query_string_len = buffer_query_string.len();
@@ -256,7 +256,7 @@ fn go_to_line_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<usize> {
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
 
-    let ctrl_string = "Optn =>\t[Enter]  Go to Line\t[Ctrl-C]  Quit".to_string();
+    let ctrl_string = "[Enter] Go To Line\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let lineno_input_string = "Go to Line Number: ".to_string();
     let lineno_input_string_len = lineno_input_string.len();
@@ -346,7 +346,7 @@ fn clipboard_select_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<us
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
 
-    let ctrl_string = "Optn =>\t[Enter]  Go to Line\t[Up]  Select Previous\t[Down]  Select Next\t[Ctrl-C]  Quit".to_string();
+    let ctrl_string = "[Enter] Go to Line\t[Up] Select Previous\t[Down] Select Next\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let clipboard_select_string = "Clipboard: ".to_string();
     let clipboard_select_string_len = clipboard_select_string.len();
@@ -661,8 +661,8 @@ fn main() {
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
                     },
-                    '\u{0009}' => {
-                        // Ctrl-I -> clipboard
+                    '\u{0010}' => {
+                        // Ctrl-P -> clipboard
                         match clipboard_select_loop(ctrl_window, &editor) {
                             Some(new_clipboard_cursor) => { editor.set_clipboard_cursor(new_clipboard_cursor) },
                             None => {}
