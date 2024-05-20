@@ -639,10 +639,12 @@ fn main() {
                 editor.fast_up();
             },
             Some(WchResult::KeyCode(KEY_CRIGHT)) => {
-                editor.next_word();
+                //editor.next_word();
+                editor.fast_right();
             },
             Some(WchResult::KeyCode(KEY_CLEFT)) => {
-                editor.prev_word();
+                //editor.prev_word();
+                editor.fast_left();
             },
             // Unrecognized keycode
             Some(WchResult::KeyCode(code)) => {

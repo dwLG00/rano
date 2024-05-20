@@ -458,18 +458,52 @@ impl GapEditor {
         for _ in 0..actual_scroll_distance {
             self.scroll_up();
         }
+
+        if self.buffer.current_line == 0 {
+            // If we reach the very top, beep
+            beep();
+        }
     }
 
     pub fn fast_down(&mut self) {
         // Scrolls up half a screen's worth
         let (height, width) = self.size;
         let attempted_scroll_distance = height / 2;
-        let actual_scroll_distance = min(attempted_scroll_distance, self.buffer.n_lines - self.buffer.current_line - 1);
+        let actual_scroll_distance = min(attempted_scroll_distance, max(self.buffer.n_lines - self.buffer.current_line, 1) - 1);
         for _ in 0..actual_scroll_distance {
             self.scroll_down();
         }
+        if self.buffer.current_line == self.buffer.n_lines - 1 {
+            // If we reach the very top, beep
+            beep();
+        }
     }
 
+    pub fn fast_right(&mut self) {
+        // Scrolls right a tab's worth
+        let attempted_scroll_distance = self.tab_size;
+        let actual_scroll_distance = min(attempted_scroll_distance, max(self.buffer.len() - self.buffer.gap_position, 1));
+        for _ in 0..actual_scroll_distance {
+            self.scroll_right();
+        }
+        if self.buffer.gap_position == self.buffer.len() {
+            // If we reach the very top, beep
+            beep();
+        }
+    }
+
+    pub fn fast_left(&mut self) {
+        // Scrolls right a tab's worth
+        let attempted_scroll_distance = self.tab_size;
+        let actual_scroll_distance = min(attempted_scroll_distance, self.buffer.gap_position);
+        for _ in 0..actual_scroll_distance {
+            self.scroll_left();
+        }
+        if self.buffer.gap_position == 0 {
+            // If we reach the very top, beep
+            beep();
+        }
+    }
 
     pub fn go_to_line(&mut self, n: usize) {
         // Moves the cursor to the nth line
