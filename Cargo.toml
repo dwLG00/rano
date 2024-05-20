@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ncurses = { version="6.0.0", features=["wide", "wide_chtype"] }
 generational-arena = "0.2"
+regex = "1.10.4"
 
 #[features]
 #wide = []

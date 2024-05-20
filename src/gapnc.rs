@@ -9,11 +9,13 @@ use std::io::Read;
 use std::fs;
 use std::path::Path;
 use std::cmp::{min, max};
+use regex::Regex;
 //use crate::lines;
 use crate::gap_buffer;
 use crate::colors;
 
 type WindowYX = (usize, usize);
+type Range = (usize, usize); // Dijkstra range: [a, b)
 
 const INIT_GAP_SIZE: usize = 1024; // This is probably good enough for us to last us for a while
 const TAB_SIZE: usize = 4; // Move this into a config file soon
@@ -39,6 +41,8 @@ pub struct GapEditor {
     clipboard_cursor: Option<usize>,
     // Save flag
     pub save_flag: bool,
+    // Search highlighting
+    search_hits: Vec<Range>,
     // Other configurations
     tab_size: usize
 }
@@ -69,6 +73,7 @@ impl GapEditor {
             clipboard: Vec::<Vec<char>>::new(),
             clipboard_cursor: None,
             save_flag: true,
+            search_hits: Vec::<Range>::new(),
             tab_size: TAB_SIZE
         }
     }
@@ -113,6 +118,8 @@ impl GapEditor {
                     _ => {
                         if self.select_mode_flag && lmark <= i && i <= rmark {
                             waddch_with_highlight(self.window, *ch as chtype);
+                        } else if self.index_in_search_hits(i) {
+                            waddch_with_search(self.window, *ch as chtype);
                         } else {
                             waddch(self.window, *ch as chtype);
                         }
@@ -731,6 +738,48 @@ impl GapEditor {
         self.clipboard_cursor = None;
     }
 
+    pub fn find_raw(&self, search_string: String, start: usize) -> Option<Range> {
+        // Searches the entire buffer and finds
+        // the index of first search result
+        let re = match Regex::new(&search_string) {
+            Ok(regex) => regex,
+            Err(e) => { return None; }
+        };
+        match re.find(&self.export()[start..]) {
+            Some(m) => Some((m.start(), m.end())),
+            None => None
+        }
+    }
+
+    pub fn find(&mut self, search_string: String) {
+        // Searches the entire buffer for string
+        // and adds range to the search_hits vector
+        match self.find_raw(search_string, self.buffer.gap_position) {
+            Some((start, end)) => {
+                self.buffer.move_gap(start);
+                self.search_hits.push((start, end));
+                self.move_cursor_to();
+            },
+            None => {}
+        }
+    }
+
+    pub fn clear_search(&mut self) {
+        // Clears the search_hits vector
+        self.search_hits.clear();
+    }
+
+    pub fn index_in_search_hits(&self, index: usize) -> bool {
+        // Checks if index is in a search_hits
+        // range
+        for (a, b) in self.search_hits.iter() {
+            if *a <= index && index < *b {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn export(&self) -> String {
         self.buffer.export()
     }
@@ -793,4 +842,11 @@ fn waddch_with_highlight(window: WINDOW, ch: chtype) {
     waddch(window, ch);
     //wattroff(window, COLOR_PAIR(1));
     wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
+}
+
+fn waddch_with_search(window: WINDOW, ch: chtype) {
+    // Add character with background search highlighting
+    wattron(window, COLOR_PAIR(colors::CP_SEARCH));
+    waddch(window, ch);
+    wattroff(window, COLOR_PAIR(colors::CP_SEARCH));
 }

@@ -527,6 +527,7 @@ fn main() {
     use_default_colors();
     start_color();
     init_pair(colors::CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
+    init_pair(colors::CP_SEARCH, COLOR_BLACK, COLOR_YELLOW);
 
     // Create windows
     let mut windows = Vec::new();
