@@ -804,7 +804,8 @@ fn main() {
                         match search_loop(ctrl_window, &editor) {
                             Some(search_string) => {
                                 editor.clear_search();
-                                editor.find_all(search_string, editor.pos());
+                                //editor.find_all(search_string, editor.pos());
+                                editor.find_all(search_string, 0);
                             },
                             None => {}
                         }
