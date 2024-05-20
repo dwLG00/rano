@@ -640,6 +640,7 @@ fn main() {
                 editor.next_word();
             },
             Some(WchResult::KeyCode(KEY_CLEFT)) => {
+                editor.prev_word();
             },
             // Unrecognized keycode
             Some(WchResult::KeyCode(code)) => {
