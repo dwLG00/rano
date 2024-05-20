@@ -661,6 +661,7 @@ impl GapEditor {
 
         self.clipboard.push(self.buffer.cut(lmark, rmark, new_cursor_pos));
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
+        self.move_cursor_to();
 
         // Cleanup
         self.smart_cursor_flag = false;
