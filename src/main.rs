@@ -601,6 +601,7 @@ fn main() {
                 }
                 editor.scroll_left();
             },
+            // Shift Arrow Keys
             Some(WchResult::KeyCode(KEY_SDOWN)) => {
                 if !editor.is_shift_selected() {
                     editor.set_mark();
@@ -629,6 +630,16 @@ fn main() {
                     editor.set_select_shift();
                 }
                 editor.scroll_left();
+            },
+            // Control Arrow Keys
+            Some(WchResult::KeyCode(KEY_CDOWN)) => {
+            },
+            Some(WchResult::KeyCode(KEY_CUP)) => {
+            },
+            Some(WchResult::KeyCode(KEY_CRIGHT)) => {
+                editor.next_word();
+            },
+            Some(WchResult::KeyCode(KEY_CLEFT)) => {
             },
             // Unrecognized keycode
             Some(WchResult::KeyCode(code)) => {

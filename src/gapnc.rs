@@ -390,6 +390,36 @@ impl GapEditor {
         self.set_save(); // Modified the buffer, set flag
     }
 
+    pub fn next_word(&mut self) {
+        // Move cursor to beginning of the next word
+        match self.buffer.get(self.buffer.gap_position) {
+            Some(c) => {
+                let mut ch: char = *c;
+                if ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r' {
+                    // if cursor is whitespace, jump to the next non-whitespace position
+                    while (ch == '\n' || ch == '\t' || ch == ' ' || ch == '\r') && self.buffer.gap_position < self.buffer.len() {
+                        self.buffer.move_gap(self.buffer.gap_position + 1);
+                        ch = match self.buffer.get(self.buffer.gap_position) {
+                            Some(c) => *c,
+                            None => { break; }
+                        }
+                    }
+                } else {
+                    // if cursor is not whitespace, jump to the next whitespace position
+                    while (ch != '\n' && ch != '\t' && ch != ' ' && ch != '\r') && self.buffer.gap_position < self.buffer.len() {
+                        self.buffer.move_gap(self.buffer.gap_position + 1);
+                        ch = match self.buffer.get(self.buffer.gap_position) {
+                            Some(c) => *c,
+                            None => { break; }
+                        }
+                    }
+                }
+            },
+            None => {}
+        }
+        self.move_cursor_to();
+    }
+
     pub fn go_to_line(&mut self, n: usize) {
         // Moves the cursor to the nth line
         if n > self.buffer.n_lines {
