@@ -207,6 +207,10 @@ impl GapEditor {
         Some((cur_y as i32, cur_x as i32))
     }
 
+    pub fn pos(&self) -> usize {
+        self.buffer.gap_position
+    }
+
     pub fn scroll_down(&mut self) {
         // Handle the cursor changes for scrolling down
 
@@ -746,7 +750,7 @@ impl GapEditor {
             Err(e) => { return None; }
         };
         match re.find(&self.export()[start..]) {
-            Some(m) => Some((m.start(), m.end())),
+            Some(m) => Some((start + m.start(), start + m.end())),
             None => None
         }
     }
@@ -761,12 +765,12 @@ impl GapEditor {
         let mut flag = false;
         for m in re.find_iter(&self.export()[start..]) {
             if !flag {
-                let start = m.start();
-                self.buffer.move_gap(start);
+                let s = start + m.start();
+                self.buffer.move_gap(s);
                 self.move_cursor_to();
                 flag = true;
             }
-            let range = (m.start(), m.end());
+            let range = (start + m.start(), start + m.end());
             self.search_hits.push(range);
         }
     }

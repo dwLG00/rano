@@ -799,6 +799,18 @@ fn main() {
                         //break;
                         editor.paste();
                     },
+                    '\u{0017}' => {
+                        // Ctrl-W -> Find
+                        match search_loop(ctrl_window, &editor) {
+                            Some(search_string) => {
+                                editor.clear_search();
+                                editor.find_all(search_string, editor.pos());
+                            },
+                            None => {}
+                        }
+                        draw_control_bar(ctrl_window);
+                        wrefresh(ctrl_window);
+                    },
                     '\u{001F}' => {
                         // Ctrl-/ -> Go to line
                         match go_to_line_loop(ctrl_window, &editor) {
