@@ -633,8 +633,10 @@ fn main() {
             },
             // Control Arrow Keys
             Some(WchResult::KeyCode(KEY_CDOWN)) => {
+                editor.fast_down();
             },
             Some(WchResult::KeyCode(KEY_CUP)) => {
+                editor.fast_up();
             },
             Some(WchResult::KeyCode(KEY_CRIGHT)) => {
                 editor.next_word();

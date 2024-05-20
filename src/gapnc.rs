@@ -450,6 +450,26 @@ impl GapEditor {
         self.move_cursor_to();
     }
 
+    pub fn fast_up(&mut self) {
+        // Scrolls up half a screen's worth
+        let (height, width) = self.size;
+        let attempted_scroll_distance = height / 2;
+        let actual_scroll_distance = min(attempted_scroll_distance, self.buffer.current_line);
+        for _ in 0..actual_scroll_distance {
+            self.scroll_up();
+        }
+    }
+
+    pub fn fast_down(&mut self) {
+        // Scrolls up half a screen's worth
+        let (height, width) = self.size;
+        let attempted_scroll_distance = height / 2;
+        let actual_scroll_distance = min(attempted_scroll_distance, self.buffer.n_lines - self.buffer.current_line - 1);
+        for _ in 0..actual_scroll_distance {
+            self.scroll_down();
+        }
+    }
+
 
     pub fn go_to_line(&mut self, n: usize) {
         // Moves the cursor to the nth line
