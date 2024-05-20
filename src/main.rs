@@ -15,9 +15,15 @@ mod gapnc;
 mod colors;
 
 // Missing keycodes
+// Shift Arrow
 const KEY_SDOWN: i32 = 336;
 const KEY_SUP: i32 = 337;
 
+// Control Arrow
+const KEY_CRIGHT: i32 = 569;
+const KEY_CLEFT: i32 = 554;
+const KEY_CDOWN: i32 = 534;
+const KEY_CUP: i32 = 575;
 
 // File IO
 
