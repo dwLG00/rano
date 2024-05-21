@@ -822,6 +822,35 @@ impl GapEditor {
         }
     }
 
+    pub fn replace(&mut self, range: (usize, usize), replace_with: String) {
+        // Replaces the selected range with the given string
+        // These aren't Dijkstra ranges, but rather inclusive ranges
+
+        let (range_l, range_r) = range;
+        assert!(range_l <= range_r);
+        assert!(range_r < self.buffer.len());
+
+        // This is the new cursor position after cutting AND pasting
+        let new_cursor_pos = if self.buffer.gap_position < range_l { // Before the replace region -> do nothing
+            self.buffer.gap_position
+        } else if self.buffer.gap_position > range_r { // After the replace region -> Add the difference in lengths
+            self.buffer.gap_position + replace_with.len() - (range_r - range_l + 1)
+        } else { // Cursor between the replace regions -> move cursor to the end of the replaced string
+            range_l + replace_with.len()
+        };
+
+        // Move the cursor to range_l after so that we don't have to move the cursor when pasting
+        self.buffer.cut(range_l, range_r, range_l);
+        self.buffer.insert_buffer(&replace_with.chars().collect());
+        self.buffer.move_gap(new_cursor_pos);
+
+        // Cleanup
+        self.smart_cursor_flag = false;
+        self.set_save();
+        self.deselect_marks();
+        
+    }
+
     pub fn clear_search(&mut self) {
         // Clears the search_hits vector
         self.search_hits.clear();
