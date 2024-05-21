@@ -218,6 +218,7 @@ impl GapEditor {
         self.buffer.gap_position
     }
 
+    // Arrow keys
     pub fn scroll_down(&mut self) {
         // Handle the cursor changes for scrolling down
 
@@ -330,11 +331,13 @@ impl GapEditor {
         self.move_cursor_to();
     }
 
+    // Basic character insert/delete
     pub fn type_character(&mut self, character: char) {
         // Handles typing a character
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
+        /*
         if self.select_mode_flag && self.select_active {
             self.deselect_marks();
         } else if self.select_mode_flag {
@@ -345,6 +348,8 @@ impl GapEditor {
                 self.rmark += 1;
             }
         }
+        */
+        self.fix_regions(Adjust::Increment(1));
 
         self.buffer.insert(character);
         self.move_cursor_to();
@@ -356,6 +361,7 @@ impl GapEditor {
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
+        /*
         if self.select_mode_flag && self.select_active {
             self.deselect_marks();
         } else if self.select_mode_flag {
@@ -366,6 +372,8 @@ impl GapEditor {
                 self.rmark += 1;
             }
         }
+        */
+        self.fix_regions(Adjust::Increment(1));
 
         self.buffer.insert('\n');
         self.move_cursor_to();
@@ -376,9 +384,13 @@ impl GapEditor {
     pub fn tab(&mut self) {
         self.smart_cursor_flag = false;
         let (_, width) = self.size;
+        // Calculate cursor position on current line
         let line_pos = self.buffer.gap_position - self.buffer.get_left_edge(self.buffer.gap_position);
+        // Calculate displayed x position of cursor
         let display_line_pos = line_pos - (line_pos / width) * width;
+        // Calculate number of spaces since last tab "fencepost"
         let mod_tabs = display_line_pos - (display_line_pos / self.tab_size) * self.tab_size;
+        // tab_size - mod_tabs = # of spaces left until next fencepost
         for i in 0..(self.tab_size - mod_tabs) {
             self.type_character(' '); // We want spaces instead of tabs
         }
@@ -388,6 +400,7 @@ impl GapEditor {
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
+        /*
         if self.select_mode_flag && self.select_active {
             self.deselect_marks();
         } else if self.select_mode_flag {
@@ -398,6 +411,8 @@ impl GapEditor {
                 self.rmark -= 1;
             }
         }
+        */
+        self.fix_regions(Adjust::Decrement(1));
 
         match self.buffer.pop() {
             Some(_) => {},
@@ -408,6 +423,7 @@ impl GapEditor {
         self.set_save(); // Modified the buffer, set flag
     }
 
+    // Advanced navigation
     pub fn next_word(&mut self) {
         // Move cursor to beginning of the next word
         match self.buffer.get(self.buffer.gap_position) {
@@ -563,6 +579,7 @@ impl GapEditor {
 
     }
 
+    // Selection
     pub fn set_mark(&mut self) {
         // Sets the highlight mark
 
@@ -647,6 +664,7 @@ impl GapEditor {
         self.select_mode_flag && self.select_shift
     }
 
+    // Cut/Copy/Paste
     pub fn cut(&mut self) {
         // Cuts the selected text, or if no text is
         // selected, the current line
@@ -694,6 +712,7 @@ impl GapEditor {
         // Inserts buffer at cursor
 
         // Handle moving the selected regions
+        /*
         if self.select_mode_flag && self.select_active {
             self.deselect_marks();
         } else if self.select_mode_flag {
@@ -704,6 +723,8 @@ impl GapEditor {
                 self.rmark += buffer.len();
             }
         }
+        */
+        self.fix_regions(Adjust::Increment(buffer.len()));
 
         self.buffer.insert_buffer(buffer);
 
@@ -724,6 +745,7 @@ impl GapEditor {
         //self.insert_buffer(*buffer.clone());
     }
 
+    // Clipboard
     pub fn set_clipboard_cursor(&mut self, pos: usize) {
         // Sets the clipboard cursor
         assert!(pos < self.clipboard.len());
@@ -750,6 +772,7 @@ impl GapEditor {
         self.clipboard_cursor = None;
     }
 
+    // Search / Find
     pub fn find_raw(&self, search_string: String, start: usize) -> Option<Range> {
         // Searches the buffer from `start` and finds
         // the range of first search result
@@ -812,8 +835,9 @@ impl GapEditor {
         false
     }
 
-    pub fn handle_regions(&mut self, adjust: Adjust) {
-        // Handles the adjusting of select and highlight regions
+    // Misc helper functions (aides functions above)
+    pub fn fix_regions(&mut self, adjust: Adjust) {
+        // Fixes the select and highlight regions after making an edit
 
         // Handle 
         match adjust {
@@ -868,10 +892,9 @@ impl GapEditor {
                 }
             }
         }
-
-        
     }
 
+    // Saving
     pub fn export(&self) -> String {
         self.buffer.export()
     }
@@ -882,7 +905,7 @@ impl GapEditor {
     }
 }
 
-
+// Helper functions for ncurses
 fn get_window_dimensions(window: WINDOW) -> WindowYX {
     // Return dimensions of terminal window (height, width)
     let mut width = 0;
