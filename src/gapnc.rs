@@ -843,12 +843,33 @@ impl GapEditor {
         self.buffer.cut(range_l, range_r, range_l);
         self.buffer.insert_buffer(&replace_with.chars().collect());
         self.buffer.move_gap(new_cursor_pos);
+        self.move_cursor_to();
 
         // Cleanup
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
         
+    }
+
+    pub fn replace_all(&mut self, replace_with: String) {
+        // Replace all regions in the search_hits vector
+        // with the given string
+
+        // Clone search_hits so we don't run into mut borrow issues
+        let search_hits = self.search_hits.clone();
+
+        for (l, r) in search_hits {
+            self.buffer.move_gap(r); // This makes moving the cursor to the end easier
+            self.replace((l, r), replace_with.clone());
+        }
+        self.move_cursor_to();
+
+        // Cleanup
+        self.smart_cursor_flag = false;
+        self.set_save();
+        self.deselect_marks();
+        self.clear_search();
     }
 
     pub fn clear_search(&mut self) {
