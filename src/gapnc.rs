@@ -20,6 +20,13 @@ type Range = (usize, usize); // Dijkstra range: [a, b)
 const INIT_GAP_SIZE: usize = 1024; // This is probably good enough for us to last us for a while
 const TAB_SIZE: usize = 4; // Move this into a config file soon
 
+// Enum for increment/decrement - used to adjust highlight regions
+pub enum Adjust {
+    Increment(usize),
+    Decrement(usize)
+}
+
+// Gap Editor
 pub struct GapEditor {
     buffer: gap_buffer::GapBuffer,
     // Cursors
@@ -803,6 +810,66 @@ impl GapEditor {
             }
         }
         false
+    }
+
+    pub fn handle_regions(&mut self, adjust: Adjust) {
+        // Handles the adjusting of select and highlight regions
+
+        // Handle 
+        match adjust {
+            Adjust::Increment(amount) => {
+                // Handle selection
+                if self.select_mode_flag && self.select_active {
+                    self.deselect_marks();
+                } else if self.select_mode_flag {
+                    if self.buffer.gap_position <= self.lmark {
+                        self.lmark += amount;
+                    }
+                    if self.buffer.gap_position <= self.rmark {
+                        self.rmark += amount;
+                    }
+                }
+
+                // Handle highlighted regions
+                for i in 0..self.search_hits.len() {
+                    let (mut lmark, mut rmark) = self.search_hits[i];
+                    if self.buffer.gap_position <= lmark {
+                        lmark += amount;
+                    }
+                    if self.buffer.gap_position <= rmark {
+                        rmark += amount;
+                    }
+                    self.search_hits[i] = (lmark, rmark);
+                }
+            },
+            Adjust::Decrement(amount) => {
+                // Handle selection
+                if self.select_mode_flag && self.select_active {
+                    self.deselect_marks();
+                } else if self.select_mode_flag {
+                    if self.buffer.gap_position <= self.lmark {
+                        self.lmark -= amount;
+                    }
+                    if self.buffer.gap_position <= self.rmark {
+                        self.rmark -= amount;
+                    }
+                }
+
+                // Handle highlighted regions
+                for i in 0..self.search_hits.len() {
+                    let (mut lmark, mut rmark) = self.search_hits[i];
+                    if self.buffer.gap_position <= lmark {
+                        lmark -= amount;
+                    }
+                    if self.buffer.gap_position <= rmark {
+                        rmark -= amount;
+                    }
+                    self.search_hits[i] = (lmark, rmark);
+                }
+            }
+        }
+
+        
     }
 
     pub fn export(&self) -> String {
