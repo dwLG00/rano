@@ -670,6 +670,9 @@ impl GapEditor {
         // selected, the current line
 
         let (lmark, rmark) = self.get_select_region();
+        let region_size = rmark - lmark + 1;
+        self.pop_search_regions(lmark, rmark); // Delete any highlighted regions that would be cut
+        self.fix_regions(Adjust::Decrement(region_size));
 
         // Get the new cursor position
         let new_cursor_pos = if self.buffer.gap_position < lmark {
@@ -892,6 +895,11 @@ impl GapEditor {
                 }
             }
         }
+    }
+
+    pub fn pop_search_regions(&mut self, lmark: usize, rmark: usize) {
+        // Removes all search results with bounds within [lmark, rmark]
+        self.search_hits = self.search_hits.iter().filter(|(l, r)| *l < lmark || *r > rmark).cloned().collect();
     }
 
     // Saving
