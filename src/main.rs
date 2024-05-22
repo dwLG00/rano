@@ -863,7 +863,7 @@ fn main() {
                     },
                     '\u{0001}' => {
                         // Ctrl-A -> undo
-                        editor.revert();
+                        editor.undo();
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break

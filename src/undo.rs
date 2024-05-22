@@ -1,3 +1,5 @@
+
+#[derive(Clone)]
 pub enum Action {
     TypeChar(usize, char, usize), // TypeChar(position, character, end_position)
     Newline(usize, usize), // Newline(position, end_position
@@ -7,6 +9,7 @@ pub enum Action {
     Insert(usize, usize, String, usize) // Insert(start_position, range_l, pasted_string, end_position)
 }
 
+#[derive(Clone)]
 pub enum ActionGroup {
     // This allows us to group multiple actions together
     // e.g. tab actions all into one

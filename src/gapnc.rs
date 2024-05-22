@@ -53,6 +53,7 @@ pub struct GapEditor {
     search_hits: Vec<Range>,
     // History
     history: Vec<undo::ActionGroup>,
+    redo_history: Vec<undo::ActionGroup>,
     // Other configurations
     tab_size: usize
 }
@@ -85,6 +86,7 @@ impl GapEditor {
             save_flag: true,
             search_hits: Vec::<Range>::new(),
             history: Vec::<undo::ActionGroup>::new(),
+            redo_history: Vec::<undo::ActionGroup>::new(),
             tab_size: TAB_SIZE
         }
     }
@@ -1086,19 +1088,56 @@ impl GapEditor {
         self.move_cursor_to();
     }
 
-    pub fn revert(&mut self) {
+    pub fn revert(&mut self) -> Option<undo::ActionGroup> {
         // Undos one change
 
-        match self.history.pop() {
+        let ret = match self.history.pop() {
             Some(action_group) => {
                 self.execute_action_group(action_group.undo());
+                Some(action_group)
             },
             None => {
                 // history is empty
                 beep();
+                None
             }
-        }
+        };
         self.clear_search();
+        ret
+    }
+
+    pub fn unrevert(&mut self) -> Option<undo::ActionGroup> {
+        // Redos one change
+        let ret = match self.redo_history.pop() {
+            Some(action_group) => {
+                self.execute_action_group(action_group.clone());
+                Some(action_group)
+            },
+            None => {
+                beep();
+                None
+            }
+        };
+        self.clear_search();
+        ret
+    }
+
+    pub fn undo(&mut self) {
+        match self.revert() {
+            Some(action_group) => {
+                self.redo_history.push(action_group);
+            },
+            None => {}
+        }
+    }
+
+    pub fn redo(&mut self) {
+        match self.unrevert() {
+            Some(action_group) => {
+                self.history.push(action_group);
+            },
+            None => {}
+        }
     }
 
     pub fn push_history(&mut self, action_group: undo::ActionGroup) {
@@ -1109,6 +1148,10 @@ impl GapEditor {
     pub fn clear_history(&mut self) {
         // Clears the history
         self.history.clear();
+    }
+
+    pub fn clear_redo_history(&mut self) {
+        self.redo_history.clear();
     }
 
     // Actions that modify history
