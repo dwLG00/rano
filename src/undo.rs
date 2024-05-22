@@ -3,8 +3,8 @@ pub enum Action {
     Newline(usize, usize), // Newline(position, end_position
     Delete(usize, char, usize), // Delete(position, deleted_character, end_position)
     Replace(usize, String, String), // Replace(range_left, replaced_string, replace_string)
-    Cut(usize, String, usize), // Cut(range_left, cut_string, end_position)
-    Paste(usize, String, usize) // Paste(start_position, pasted_string, end_position)
+    Cut(usize, String), // Cut(range_left, cut_string, end_position)
+    Paste(usize, String) // Paste(start_position, pasted_string, end_position)
 }
 
 pub enum ActionGroup {
@@ -12,6 +12,31 @@ pub enum ActionGroup {
     // e.g. tab actions all into one
     Singleton(Action),
     Multiple(Vec<Action>)
+}
+
+impl Action {
+    pub fn undo(&self) -> Action {
+        match self {
+            Self::Insert(pos, ch, end) => Self::Delete(*end, *ch, *pos),
+            Self::Newline(pos, end) => Self::Delete(*end, '\n', *pos),
+            Self::Delete(pos, ch, end) => match *ch {
+                '\n' => Self::Newline(*end, *pos),
+                _ => Self::Insert(*end, *ch, *pos)
+            },
+            Self::Replace(range_l, replaced, replacing) => Self::Replace(*range_l, replacing.clone(), replaced.clone()),
+            Self::Cut(range_l, cut_string) => Self::Paste(*range_l, cut_string.clone()),
+            Self::Paste(range_l, paste_string) => Self::Cut(*range_l, paste_string.clone())
+        }
+    }
+}
+
+impl ActionGroup {
+    pub fn undo(&self) -> ActionGroup {
+        match self {
+            Self::Singleton(action) => Self::Singleton(action.undo()),
+            Self::Multiple(action_vector) => Self::Multiple(action_vector.iter().rev().map(|a| a.undo()).collect())
+        }
+    }
 }
 
 pub fn merge_action_groups(action_groups: Vec<ActionGroup>) -> ActionGroup {

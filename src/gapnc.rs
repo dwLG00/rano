@@ -721,7 +721,7 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
-        undo::ActionGroup::Singleton(undo::Action::Cut(lmark, cut_string, new_cursor_pos))
+        undo::ActionGroup::Singleton(undo::Action::Cut(lmark, cut_string))
     }
 
     pub fn copy(&mut self) {
@@ -768,7 +768,7 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
-        undo::ActionGroup::Singleton(undo::Action::Paste(start_gap_position, paste_string, end_gap_position))
+        undo::ActionGroup::Singleton(undo::Action::Paste(start_gap_position, paste_string))
     }
 
     pub fn paste(&mut self) -> Option<undo::ActionGroup> {
