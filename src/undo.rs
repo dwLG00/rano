@@ -3,8 +3,8 @@ pub enum Action {
     Newline(usize, usize), // Newline(position, end_position
     Delete(usize, char, usize), // Delete(position, deleted_character, end_position)
     Replace(usize, String, String), // Replace(range_left, replaced_string, replace_string)
-    Cut(usize, String), // Cut(range_left, cut_string, end_position)
-    Insert(usize, String) // Insert(start_position, pasted_string, end_position)
+    Cut(usize, usize, String, usize), // Cut(start_position, range_left, cut_string, end_position)
+    Insert(usize, usize, String, usize) // Insert(start_position, range_l, pasted_string, end_position)
 }
 
 pub enum ActionGroup {
@@ -24,8 +24,8 @@ impl Action {
                 _ => Self::TypeChar(*end, *ch, *pos)
             },
             Self::Replace(range_l, replaced, replacing) => Self::Replace(*range_l, replacing.clone(), replaced.clone()),
-            Self::Cut(range_l, cut_string) => Self::Insert(*range_l, cut_string.clone()),
-            Self::Insert(range_l, paste_string) => Self::Cut(*range_l, paste_string.clone())
+            Self::Cut(start, range_l, cut_string, end) => Self::Insert(*end, *range_l, cut_string.clone(), *start),
+            Self::Insert(start, range_l, paste_string, end) => Self::Cut(*end, *range_l, paste_string.clone(), *start)
         }
     }
 }

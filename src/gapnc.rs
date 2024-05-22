@@ -667,7 +667,7 @@ impl GapEditor {
         if self.select_mode_flag && self.select_active {
             // 1 mark -> use cursor as the other mark
             if self.lmark < self.buffer.gap_position {
-                (self.lmark, self.buffer.gap_position)
+                (self.lmark, self.buffer.gap_position - 1)
             } else {
                 (self.buffer.gap_position, self.lmark)
             }
@@ -728,6 +728,8 @@ impl GapEditor {
             lmark
         };
 
+        let start_gap_position = self.buffer.gap_position;
+
         //let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
         let cut_vector = self.cut_raw(lmark, rmark, new_cursor_pos);
         let cut_string = cut_vector.clone().iter().collect();
@@ -735,7 +737,9 @@ impl GapEditor {
         self.clipboard.push(cut_vector);
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
 
-        undo::ActionGroup::Singleton(undo::Action::Cut(lmark, cut_string))
+        let end_gap_position = self.buffer.gap_position;
+
+        undo::ActionGroup::Singleton(undo::Action::Cut(start_gap_position, lmark, cut_string, end_gap_position))
     }
 
     pub fn copy(&mut self) {
@@ -782,7 +786,7 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
-        undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, paste_string))
+        undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, start_gap_position, paste_string, end_gap_position))
     }
 
     pub fn paste(&mut self) -> Option<undo::ActionGroup> {
@@ -1047,29 +1051,34 @@ impl GapEditor {
     pub fn execute_action(&mut self, action: undo::Action) {
         // Executes an action
         match action {
-            undo::Action::TypeChar(start, ch, _) => {
+            undo::Action::TypeChar(start, ch, end) => {
                 self.buffer.move_gap(start);
                 self.type_character(ch);
+                self.buffer.move_gap(end);
             },
-            undo::Action::Newline(start, _) => {
+            undo::Action::Newline(start, end) => {
                 self.buffer.move_gap(start);
                 self.newline();
+                self.buffer.move_gap(end);
             },
-            undo::Action::Delete(start, _, _) => {
+            undo::Action::Delete(start, _, end) => {
                 self.buffer.move_gap(start);
                 self.backspace();
+                self.buffer.move_gap(end);
             },
             undo::Action::Replace(range_l, replaced, replacing) => {
                 let range_r = range_l + replaced.len() - 1;
                 self.replace((range_l, range_r), replacing.clone());
             },
-            undo::Action::Cut(range_l, cut_string) => {
+            undo::Action::Cut(start, range_l, cut_string, end) => {
                 let range_r = range_l + cut_string.len() - 1;
                 self.cut_raw(range_l, range_r, range_l);
+                self.buffer.move_gap(end);
             },
-            undo::Action::Insert(range_l, paste_string) => {
+            undo::Action::Insert(start, range_l, paste_string, end) => {
                 self.buffer.move_gap(range_l);
                 self.insert_buffer(&paste_string.chars().collect());
+                self.buffer.move_gap(end);
             }
             _ => {}
         }
