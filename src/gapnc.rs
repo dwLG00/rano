@@ -824,23 +824,23 @@ impl GapEditor {
 
     pub fn replace(&mut self, range: (usize, usize), replace_with: String) {
         // Replaces the selected range with the given string
-        // These aren't Dijkstra ranges, but rather inclusive ranges
+        // These are Dijkstra ranges, unlike the select range..
 
         let (range_l, range_r) = range;
         assert!(range_l <= range_r);
-        assert!(range_r < self.buffer.len());
+        assert!(range_r <= self.buffer.len());
 
         // This is the new cursor position after cutting AND pasting
         let new_cursor_pos = if self.buffer.gap_position < range_l { // Before the replace region -> do nothing
             self.buffer.gap_position
-        } else if self.buffer.gap_position > range_r { // After the replace region -> Add the difference in lengths
-            self.buffer.gap_position + replace_with.len() - (range_r - range_l + 1)
+        } else if self.buffer.gap_position >= range_r { // After the replace region -> Add the difference in lengths
+            self.buffer.gap_position + replace_with.len() - (range_r - range_l)
         } else { // Cursor between the replace regions -> move cursor to the end of the replaced string
             range_l + replace_with.len()
         };
 
         // Move the cursor to range_l after so that we don't have to move the cursor when pasting
-        self.buffer.cut(range_l, range_r, range_l);
+        self.buffer.cut(range_l, range_r - 1, range_l); // Dijkstra to inclusive range
         self.buffer.insert_buffer(&replace_with.chars().collect());
         self.buffer.move_gap(new_cursor_pos);
         self.move_cursor_to();
@@ -867,7 +867,16 @@ impl GapEditor {
             let adj_r = (r as i32 + pos_diff) as usize;
             self.buffer.move_gap(adj_r); // This makes moving the cursor to the end easier
             self.replace((adj_l, adj_r), replace_with.clone());
-            pos_diff += replace_with.len() as i32 - (r - l + 1) as i32;
+            pos_diff += replace_with.len() as i32 - (r - l) as i32;
+
+            // Debug
+            /*
+            werase(self.window);
+            self.display_at_frame_cursor();
+            self.move_cursor_to();
+            wrefresh(self.window);
+            debug_wait_for_input(self.window);
+            */
         }
         self.move_cursor_to();
 
@@ -1028,4 +1037,20 @@ fn waddch_with_search(window: WINDOW, ch: chtype) {
     wattron(window, COLOR_PAIR(colors::CP_SEARCH));
     waddch(window, ch);
     wattroff(window, COLOR_PAIR(colors::CP_SEARCH));
+}
+
+fn debug_wait_for_input(window: WINDOW) {
+    let ch = wget_wch(window);
+    match ch {
+        Some(WchResult::Char(char_code)) => {
+            let c = char::from_u32(char_code as u32).expect("Invalid char");
+            match c {
+                '\u{0003}' => {
+                    panic!();
+                },
+                _ => {}
+            }
+        },
+        _ => {}
+    }
 }
