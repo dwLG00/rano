@@ -865,6 +865,10 @@ fn main() {
                         // Ctrl-A -> undo
                         editor.undo();
                     },
+                    '\u{001A}' => {
+                        // Ctrl-Z -> redo
+                        editor.redo();
+                    },
                     '\u{0018}' => {
                         // Ctrl-X -> break
                         //TODO Implement

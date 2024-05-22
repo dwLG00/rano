@@ -338,7 +338,7 @@ impl GapEditor {
     }
 
     // Basic character insert/delete
-    pub fn type_character(&mut self, character: char) -> undo::ActionGroup {
+    pub fn type_character(&mut self, character: char, redo: bool) -> undo::ActionGroup {
         // Handles typing a character
         self.smart_cursor_flag = false;
 
@@ -365,10 +365,14 @@ impl GapEditor {
         let end_gap_position = self.buffer.gap_position; // for history
 
         self.set_save(); // Modified the buffer, set flag
+
+        if !redo {
+            self.clear_redo_history();
+        }
         undo::ActionGroup::Singleton(undo::Action::TypeChar(start_gap_position, character, end_gap_position))
     }
 
-    pub fn newline(&mut self) -> undo::ActionGroup {
+    pub fn newline(&mut self, redo: bool) -> undo::ActionGroup {
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
@@ -394,10 +398,14 @@ impl GapEditor {
         let end_gap_position = self.buffer.gap_position; // for history
 
         self.set_save(); // Modified the buffer, set flag
+
+        if !redo {
+            self.clear_redo_history();
+        }
         undo::ActionGroup::Singleton(undo::Action::Newline(start_gap_position, end_gap_position))
     }
 
-    pub fn tab(&mut self) -> undo::ActionGroup {
+    pub fn tab(&mut self, redo: bool) -> undo::ActionGroup {
         self.smart_cursor_flag = false;
         let (_, width) = self.size;
         // Calculate cursor position on current line
@@ -411,12 +419,12 @@ impl GapEditor {
         // Merge the actions
         let mut actions = Vec::<undo::ActionGroup>::new();
         for i in 0..(self.tab_size - mod_tabs) {
-            actions.push(self.type_character(' ')); // We want spaces instead of tabs
+            actions.push(self.type_character(' ', redo)); // We want spaces instead of tabs
         }
         undo::merge_action_groups(actions)
     }
 
-    pub fn backspace(&mut self) -> Option<undo::ActionGroup> {
+    pub fn backspace(&mut self, redo: bool) -> Option<undo::ActionGroup> {
         // IMPORTANT this method returns an Option<ActionGroup>
         self.smart_cursor_flag = false;
 
@@ -447,6 +455,9 @@ impl GapEditor {
 
         self.set_save(); // Modified the buffer, set flag
 
+        if !redo {
+            self.clear_redo_history();
+        }
         Some(undo::ActionGroup::Singleton(undo::Action::Delete(start_gap_position, ch, end_gap_position)))
     }
 
@@ -691,7 +702,7 @@ impl GapEditor {
         self.select_mode_flag && self.select_shift
     }
 
-    pub fn cut_raw(&mut self, lmark: usize, rmark: usize, new_cursor_pos: usize) -> Vec<char> {
+    pub fn cut_raw(&mut self, lmark: usize, rmark: usize, new_cursor_pos: usize, redo: bool) -> Vec<char> {
         // Cuts out the selected region, and cuts the text
 
         // Cleans up highlighting
@@ -706,6 +717,10 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
         self.move_cursor_to();
+
+        if !redo {
+            self.clear_redo_history();
+        }
 
         cut_vector
     }
@@ -733,7 +748,7 @@ impl GapEditor {
         let start_gap_position = self.buffer.gap_position;
 
         //let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
-        let cut_vector = self.cut_raw(lmark, rmark, new_cursor_pos);
+        let cut_vector = self.cut_raw(lmark, rmark, new_cursor_pos, false);
         let cut_string = cut_vector.clone().iter().collect();
 
         self.clipboard.push(cut_vector);
@@ -758,7 +773,7 @@ impl GapEditor {
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
     }
 
-    pub fn insert_buffer(&mut self, buffer: &Vec<char>) -> undo::ActionGroup {
+    pub fn insert_buffer(&mut self, buffer: &Vec<char>, redo: bool) -> undo::ActionGroup {
         // Inserts buffer at cursor
 
         // Handle moving the selected regions
@@ -788,6 +803,10 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
+        if !redo {
+            self.clear_redo_history();
+        }
+
         undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, start_gap_position, paste_string, end_gap_position))
     }
 
@@ -795,7 +814,7 @@ impl GapEditor {
         // Pastes the cut buffer at the cursor position
         if let Some(clipboard_cursor) = self.clipboard_cursor {
             match self.clipboard.get(clipboard_cursor) {
-                Some(buffer) => { return Some(self.insert_buffer(&((*buffer).clone()))); },
+                Some(buffer) => { return Some(self.insert_buffer(&((*buffer).clone()), false)); },
                 None => { beep(); return None; }
             }
         }
@@ -877,7 +896,7 @@ impl GapEditor {
         }
     }
 
-    pub fn replace(&mut self, range: (usize, usize), replace_with: String) -> undo::ActionGroup {
+    pub fn replace(&mut self, range: (usize, usize), replace_with: String, redo: bool) -> undo::ActionGroup {
         // Replaces the selected range with the given string
         // These are Dijkstra ranges, unlike the select range..
 
@@ -906,6 +925,10 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
+        if !redo {
+            self.clear_redo_history();
+        }
+
         undo::ActionGroup::Singleton(undo::Action::Replace(range_l, replaced_string, replace_with.clone()))        
     }
 
@@ -925,7 +948,7 @@ impl GapEditor {
             let adj_l = (l as i32 + pos_diff) as usize;
             let adj_r = (r as i32 + pos_diff) as usize;
             self.buffer.move_gap(adj_r); // This makes moving the cursor to the end easier
-            action_groups.push(self.replace((adj_l, adj_r), replace_with.clone()));
+            action_groups.push(self.replace((adj_l, adj_r), replace_with.clone(), false));
             pos_diff += replace_with.len() as i32 - (r - l) as i32;
 
             // Debug
@@ -1036,51 +1059,51 @@ impl GapEditor {
     }
 
     // History
-    pub fn execute_action_group(&mut self, actions: undo::ActionGroup) {
+    pub fn execute_action_group(&mut self, actions: undo::ActionGroup, redo: bool) {
         // Executes an action group
         match actions {
             undo::ActionGroup::Singleton(action) => {
-                self.execute_action(action);
+                self.execute_action(action, redo);
             },
             undo::ActionGroup::Multiple(actions) => {
                 for action in actions { 
-                    self.execute_action(action);
+                    self.execute_action(action, redo);
                 }
             }
         }
     }
 
-    pub fn execute_action(&mut self, action: undo::Action) {
+    pub fn execute_action(&mut self, action: undo::Action, redo: bool) {
         // Executes an action
         match action {
             undo::Action::TypeChar(start, ch, end) => {
                 self.buffer.move_gap(start);
-                self.type_character(ch);
+                self.type_character(ch, redo);
                 self.buffer.move_gap(end);
             },
             undo::Action::Newline(start, end) => {
                 self.buffer.move_gap(start);
-                self.newline();
+                self.newline(redo);
                 self.buffer.move_gap(end);
             },
             undo::Action::Delete(start, _, end) => {
                 self.buffer.move_gap(start);
-                self.backspace();
+                self.backspace(redo);
                 self.buffer.move_gap(end);
             },
             undo::Action::Replace(range_l, replaced, replacing) => {
                 let range_r = range_l + replaced.len();
-                self.replace((range_l, range_r), replacing.clone());
+                self.replace((range_l, range_r), replacing.clone(), redo);
                 self.buffer.move_gap(range_l);
             },
             undo::Action::Cut(start, range_l, cut_string, end) => {
                 let range_r = range_l + cut_string.len() - 1;
-                self.cut_raw(range_l, range_r, range_l);
+                self.cut_raw(range_l, range_r, range_l, redo);
                 self.buffer.move_gap(end);
             },
             undo::Action::Insert(start, range_l, paste_string, end) => {
                 self.buffer.move_gap(range_l);
-                self.insert_buffer(&paste_string.chars().collect());
+                self.insert_buffer(&paste_string.chars().collect(), redo);
                 self.buffer.move_gap(end);
             }
             _ => {}
@@ -1093,7 +1116,7 @@ impl GapEditor {
 
         let ret = match self.history.pop() {
             Some(action_group) => {
-                self.execute_action_group(action_group.undo());
+                self.execute_action_group(action_group.undo(), true);
                 Some(action_group)
             },
             None => {
@@ -1110,7 +1133,7 @@ impl GapEditor {
         // Redos one change
         let ret = match self.redo_history.pop() {
             Some(action_group) => {
-                self.execute_action_group(action_group.clone());
+                self.execute_action_group(action_group.clone(), true);
                 Some(action_group)
             },
             None => {
@@ -1156,22 +1179,22 @@ impl GapEditor {
 
     // Actions that modify history
     pub fn type_character_h(&mut self, ch: char) {
-        let ag = self.type_character(ch);
+        let ag = self.type_character(ch, false);
         self.push_history(ag);
     }
 
     pub fn newline_h(&mut self) {
-        let ag = self.newline();
+        let ag = self.newline(false);
         self.push_history(ag);
     }
 
     pub fn tab_h(&mut self) {
-        let ag = self.tab();
+        let ag = self.tab(false);
         self.push_history(ag);
     }
 
     pub fn backspace_h(&mut self) {
-        let maybe_ag = self.backspace();
+        let maybe_ag = self.backspace(false);
         match maybe_ag {
             Some(ag) => { self.push_history(ag); },
             None => {}
@@ -1192,7 +1215,7 @@ impl GapEditor {
     }
 
     pub fn replace_h(&mut self, range: (usize, usize), replace_with: String) {
-        let ag = self.replace(range, replace_with);
+        let ag = self.replace(range, replace_with, false);
         self.push_history(ag);
     }
 
