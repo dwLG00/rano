@@ -1089,9 +1089,64 @@ impl GapEditor {
         }
     }
 
+    pub fn push_history(&mut self, action_group: undo::ActionGroup) {
+        // Pushes action group to history
+        self.history.push(action_group);
+    }
+
     pub fn clear_history(&mut self) {
         // Clears the history
         self.history.clear();
+    }
+
+    // Actions that modify history
+    pub fn type_character_h(&mut self, ch: char) {
+        let ag = self.type_character(ch);
+        self.push_history(ag);
+    }
+
+    pub fn newline_h(&mut self) {
+        let ag = self.newline();
+        self.push_history(ag);
+    }
+
+    pub fn tabs_h(&mut self) {
+        let ag = self.tab();
+        self.push_history(ag);
+    }
+
+    pub fn backspace_h(&mut self) {
+        let maybe_ag = self.backspace();
+        match maybe_ag {
+            Some(ag) => { self.push_history(ag); },
+            None => {}
+        };
+    }
+
+    pub fn cut_h(&mut self) {
+        let ag = self.cut();
+        self.push_history(ag);
+    }
+
+    pub fn paste_h(&mut self) {
+        let maybe_ag = self.paste();
+        match maybe_ag {
+            Some(ag) => { self.push_history(ag); },
+            None => { beep(); }
+        };
+    }
+
+    pub fn replace_h(&mut self, range: (usize, usize), replace_with: String) {
+        let ag = self.replace(range, replace_with);
+        self.push_history(ag);
+    }
+
+    pub fn replace_all_h(&mut self, replace_with: String) {
+        let maybe_ag = self.replace_all(replace_with);
+        match maybe_ag {
+            Some(ag) => { self.push_history(ag); },
+            None => {}
+        };
     }
 
     // Saving
