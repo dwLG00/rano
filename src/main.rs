@@ -354,7 +354,7 @@ fn search_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<(String, Opt
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
     wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
 
-    let ctrl_string = "[Enter] Find\t[^C] Cancel".to_string();
+    let ctrl_string = "[Enter] Find\t[^R] Replace\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let search_input_string = "Search for String: ".to_string();
     let search_input_string_len = search_input_string.len();

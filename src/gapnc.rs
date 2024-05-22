@@ -878,13 +878,20 @@ impl GapEditor {
             debug_wait_for_input(self.window);
             */
         }
+        // Delete search highlights
+        self.clear_search();
+
+        // After replacing, "search" for the replace term
+        let cpos = self.buffer.gap_position; // Store the cursor position, as find_all is movey
+        self.find_all(replace_with, 0);
+        self.buffer.move_gap(cpos); // Move the cursor back
+        //TODO Move find_all logic to a separate non-movey method and call that instead
         self.move_cursor_to();
 
         // Cleanup
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
-        self.clear_search();
     }
 
     pub fn clear_search(&mut self) {
