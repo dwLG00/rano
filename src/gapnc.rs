@@ -13,6 +13,7 @@ use regex::Regex;
 //use crate::lines;
 use crate::gap_buffer;
 use crate::colors;
+use crate::undo;
 
 type WindowYX = (usize, usize);
 type Range = (usize, usize); // Dijkstra range: [a, b)
@@ -332,7 +333,7 @@ impl GapEditor {
     }
 
     // Basic character insert/delete
-    pub fn type_character(&mut self, character: char) {
+    pub fn type_character(&mut self, character: char) -> undo::ActionGroup {
         // Handles typing a character
         self.smart_cursor_flag = false;
 
@@ -351,13 +352,18 @@ impl GapEditor {
         */
         self.fix_regions(Adjust::Increment(1));
 
+        let start_gap_position = self.buffer.gap_position; // for history
+
         self.buffer.insert(character);
         self.move_cursor_to();
 
+        let end_gap_position = self.buffer.gap_position; // for history
+
         self.set_save(); // Modified the buffer, set flag
+        undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, character, end_gap_position))
     }
 
-    pub fn newline(&mut self) {
+    pub fn newline(&mut self) -> undo::ActionGroup {
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
@@ -375,13 +381,18 @@ impl GapEditor {
         */
         self.fix_regions(Adjust::Increment(1));
 
+        let start_gap_position = self.buffer.gap_position; // for history        
+
         self.buffer.insert('\n');
         self.move_cursor_to();
 
+        let end_gap_position = self.buffer.gap_position; // for history
+
         self.set_save(); // Modified the buffer, set flag
+        undo::ActionGroup::Singleton(undo::Action::Newline(start_gap_position, end_gap_position))
     }
 
-    pub fn tab(&mut self) {
+    pub fn tab(&mut self) -> undo::ActionGroup {
         self.smart_cursor_flag = false;
         let (_, width) = self.size;
         // Calculate cursor position on current line
@@ -391,12 +402,17 @@ impl GapEditor {
         // Calculate number of spaces since last tab "fencepost"
         let mod_tabs = display_line_pos - (display_line_pos / self.tab_size) * self.tab_size;
         // tab_size - mod_tabs = # of spaces left until next fencepost
+
+        // Merge the actions
+        let mut actions = Vec::<undo::ActionGroup>::new();
         for i in 0..(self.tab_size - mod_tabs) {
-            self.type_character(' '); // We want spaces instead of tabs
+            actions.push(self.type_character(' ')); // We want spaces instead of tabs
         }
+        undo::merge_action_groups(actions)
     }
 
-    pub fn backspace(&mut self) {
+    pub fn backspace(&mut self) -> Option<undo::ActionGroup> {
+        // IMPORTANT this method returns an Option<ActionGroup>
         self.smart_cursor_flag = false;
 
         // Handle moving the selected regions
@@ -414,13 +430,19 @@ impl GapEditor {
         */
         self.fix_regions(Adjust::Decrement(1));
 
-        match self.buffer.pop() {
-            Some(_) => {},
-            None => { beep(); } // Trying to delete at head
-        }
+        let start_gap_position = self.buffer.gap_position;
+
+        let ch: char = match self.buffer.pop() {
+            Some(c) => {c},
+            None => { beep(); return None; } // Trying to delete at head
+        }; // Capture the deleted char
         self.move_cursor_to();
 
+        let end_gap_position = self.buffer.gap_position;
+
         self.set_save(); // Modified the buffer, set flag
+
+        Some(undo::ActionGroup::Singleton(undo::Action::Delete(start_gap_position, ch, end_gap_position)))
     }
 
     // Advanced navigation
