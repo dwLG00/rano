@@ -12,6 +12,7 @@ use regex::Regex;
 mod gap_buffer;
 //mod lines;
 //mod nc;
+mod undo;
 mod gapnc;
 mod colors;
 
