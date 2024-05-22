@@ -8,8 +8,9 @@ rano is a tiny text editor inspired by nano and written in rust.
 - Saving files
 - Cut, Copy and Paste
 - Clipboards
+- Undo/Redo
+- Find and Replace
 
 ## Anticipated features
 - Line numbers
-- Undo/Redo
-- Find and Replace
+- Syntax Highlighting
