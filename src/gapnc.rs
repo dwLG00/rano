@@ -859,9 +859,15 @@ impl GapEditor {
         // Clone search_hits so we don't run into mut borrow issues
         let search_hits = self.search_hits.clone();
 
+        let mut pos_diff: i32 = 0; // Use this to adjust the difference in position
+
+
         for (l, r) in search_hits {
-            self.buffer.move_gap(r); // This makes moving the cursor to the end easier
-            self.replace((l, r), replace_with.clone());
+            let adj_l = (l as i32 + pos_diff) as usize;
+            let adj_r = (r as i32 + pos_diff) as usize;
+            self.buffer.move_gap(adj_r); // This makes moving the cursor to the end easier
+            self.replace((adj_l, adj_r), replace_with.clone());
+            pos_diff += replace_with.len() as i32 - (r - l + 1) as i32;
         }
         self.move_cursor_to();
 
