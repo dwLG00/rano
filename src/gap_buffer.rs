@@ -494,3 +494,4 @@ impl GapBuffer {
         first
     }
 }
+

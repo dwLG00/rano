@@ -983,6 +983,11 @@ impl GapEditor {
         // Set the save flag
         self.save_flag = false;
     }
+
+    pub fn unset_save(&mut self) {
+        // Unset the save flag
+        self.save_flag = true;
+    }
 }
 
 // Helper functions for ncurses

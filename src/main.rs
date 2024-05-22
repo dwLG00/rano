@@ -354,7 +354,7 @@ fn search_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<(String, Opt
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
     wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
 
-    let ctrl_string = "[Enter] Find\t[^R] Replace\t[^C] Cancel".to_string();
+    let ctrl_string = "[Enter] Find\t[^R] Replace\t[^F] Search Regex\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
     let search_input_string = "Search for String: ".to_string();
     let search_input_string_len = search_input_string.len();
@@ -405,6 +405,10 @@ fn search_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<(String, Opt
                             None => None
                         };
                         //return Some(escape_regex(search_buffer)?);
+                    },
+                    '\u{0006}' => {
+                        // Ctrl-F -> Regex
+                        return Some((search_buffer, None));
                     },
                     '\u{0012}' => {
                         // Ctrl-R -> Replace
@@ -867,12 +871,11 @@ fn main() {
                             draw_control_bar(ctrl_window);
                             wrefresh(ctrl_window);
                         }
-                        return;
                     },
                     '\u{000F}' => {
                         // Ctrl-O -> save loop
                         if save_loop(ctrl_window, &editor, &path) {
-                            editor.set_save();
+                            editor.unset_save();
                         }
                         draw_control_bar(ctrl_window);
                         wrefresh(ctrl_window);
