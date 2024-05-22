@@ -51,6 +51,8 @@ pub struct GapEditor {
     pub save_flag: bool,
     // Search highlighting
     search_hits: Vec<Range>,
+    // History
+    history: Vec<undo::ActionGroup>,
     // Other configurations
     tab_size: usize
 }
@@ -82,6 +84,7 @@ impl GapEditor {
             clipboard_cursor: None,
             save_flag: true,
             search_hits: Vec::<Range>::new(),
+            history: Vec::<undo::ActionGroup>::new(),
             tab_size: TAB_SIZE
         }
     }
@@ -1026,6 +1029,21 @@ impl GapEditor {
         self.search_hits = self.search_hits.iter().filter(|(l, r)| *l < lmark || *r > rmark).cloned().collect();
     }
 
+    // History
+    pub fn execute_action_group(&mut self, actions: undo::ActionGroup) {
+        // Executes an action group
+        match actions {
+            undo::ActionGroup::Singleton(action) => {
+                self.execute_action(action);
+            },
+            undo::ActionGroup::Multiple(actions) => {
+                for action in actions { 
+                    self.execute_action(action);
+                }
+            }
+        }
+    }
+
     pub fn execute_action(&mut self, action: undo::Action) {
         // Executes an action
         match action {
@@ -1057,19 +1075,23 @@ impl GapEditor {
         }
     }
 
-    // History
-    pub fn execute_action_group(&mut self, actions: undo::ActionGroup) {
-        // Executes an action group
-        match actions {
-            undo::ActionGroup::Singleton(action) => {
-                self.execute_action(action);
+    pub fn revert(&mut self) {
+        // Undos one change
+
+        match self.history.pop() {
+            Some(action_group) => {
+                self.execute_action_group(action_group.undo());
             },
-            undo::ActionGroup::Multiple(actions) => {
-                for action in actions { 
-                    self.execute_action(action);
-                }
+            None => {
+                // history is empty
+                beep();
             }
         }
+    }
+
+    pub fn clear_history(&mut self) {
+        // Clears the history
+        self.history.clear();
     }
 
     // Saving
