@@ -881,7 +881,7 @@ impl GapEditor {
 
         let (range_l, range_r) = range;
         assert!(range_l <= range_r);
-        assert!(range_r <= self.buffer.len());
+        assert!(range_r < self.buffer.len());
 
         // This is the new cursor position after cutting AND pasting
         let new_cursor_pos = if self.buffer.gap_position < range_l { // Before the replace region -> do nothing
@@ -1067,8 +1067,9 @@ impl GapEditor {
                 self.buffer.move_gap(end);
             },
             undo::Action::Replace(range_l, replaced, replacing) => {
-                let range_r = range_l + replaced.len() - 1;
+                let range_r = range_l + replaced.len();
                 self.replace((range_l, range_r), replacing.clone());
+                self.buffer.move_gap(range_l);
             },
             undo::Action::Cut(start, range_l, cut_string, end) => {
                 let range_r = range_l + cut_string.len() - 1;
@@ -1082,6 +1083,7 @@ impl GapEditor {
             }
             _ => {}
         }
+        self.move_cursor_to();
     }
 
     pub fn revert(&mut self) {
@@ -1096,6 +1098,7 @@ impl GapEditor {
                 beep();
             }
         }
+        self.clear_search();
     }
 
     pub fn push_history(&mut self, action_group: undo::ActionGroup) {
