@@ -104,7 +104,7 @@ fn draw_control_bar(window: WINDOW) {
     wattron(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
     mvwaddstr(window, 0, 0, &" ".repeat(max_x as usize)).unwrap();
     wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
-    let ctrl_string = "[^X] Quit\t[^O] Save\t[^K] Cut\t[^J] Copy\t[^U] Paste\t[^P] Clipboard\t[^/] Go To Line\t[^L] Set Mark".to_string();
+    let ctrl_string = "[^X] Quit\t[^O] Save\t[^K] Cut\t[^J] Copy\t[^U] Paste\t[^P] Clipboard\t[^/] Go To Line\t[^A] Undo\t[^L] Set Mark".to_string();
     let ctrl_string_len = ctrl_string.len();
     mvwaddstr(window, 1, 0, &(ctrl_string + &" ".repeat(max_x as usize - ctrl_string_len))).unwrap();
 }
