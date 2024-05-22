@@ -352,6 +352,7 @@ fn search_loop(window: WINDOW, editor: &gapnc::GapEditor) -> Option<(String, Opt
     let mut cur_y = 0;
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
 
     let ctrl_string = "[Enter] Find\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
@@ -448,6 +449,7 @@ fn replace_loop(window: WINDOW, editor: &gapnc::GapEditor, replace_string: Strin
     let mut cur_y = 0;
 
     curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE);
+    wattroff(window, COLOR_PAIR(colors::CP_HIGHLIGHT));
 
     let ctrl_string = "[Enter] Find\t[^C] Cancel".to_string();
     let ctrl_string_len = ctrl_string.len();
