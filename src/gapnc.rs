@@ -686,15 +686,31 @@ impl GapEditor {
         self.select_mode_flag && self.select_shift
     }
 
+    pub fn cut_raw(&mut self, lmark: usize, rmark: usize, new_cursor_pos: usize) -> Vec<char> {
+        // Cuts out the selected region, and cuts the text
+
+        // Cleans up highlighting
+        let region_size = rmark - lmark + 1;
+        self.pop_search_regions(lmark, rmark); // Delete any highlighted regions that would be cut
+        self.fix_regions(Adjust::Decrement(region_size));
+
+        let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
+
+        // Cleanup
+        self.smart_cursor_flag = false;
+        self.set_save();
+        self.deselect_marks();
+        self.move_cursor_to();
+
+        cut_vector
+    }
+
     // Cut/Copy/Paste
     pub fn cut(&mut self) -> undo::ActionGroup {
         // Cuts the selected text, or if no text is
         // selected, the current line
 
         let (lmark, rmark) = self.get_select_region();
-        let region_size = rmark - lmark + 1;
-        self.pop_search_regions(lmark, rmark); // Delete any highlighted regions that would be cut
-        self.fix_regions(Adjust::Decrement(region_size));
 
         // Get the new cursor position
         let new_cursor_pos = if self.buffer.gap_position < lmark {
@@ -709,17 +725,12 @@ impl GapEditor {
             lmark
         };
 
-        let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
+        //let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
+        let cut_vector = self.cut_raw(lmark, rmark, new_cursor_pos);
         let cut_string = cut_vector.clone().iter().collect();
 
         self.clipboard.push(cut_vector);
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
-        self.move_cursor_to();
-
-        // Cleanup
-        self.smart_cursor_flag = false;
-        self.set_save();
-        self.deselect_marks();
 
         undo::ActionGroup::Singleton(undo::Action::Cut(lmark, cut_string))
     }
@@ -1035,7 +1046,8 @@ impl GapEditor {
                 self.replace((range_l, range_r), replacing.clone());
             },
             undo::Action::Cut(range_l, cut_string) => {
-                
+                let range_r = range_l + cut_string.len() - 1;
+                self.cut_raw(range_l, range_r, range_l);
             },
             undo::Action::Insert(range_l, paste_string) => {
                 self.buffer.move_gap(range_l);
