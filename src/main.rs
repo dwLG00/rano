@@ -851,15 +851,19 @@ fn main() {
                 match c {
                     '\r' => {
                         // Enter
-                        editor.newline();
+                        editor.newline_h();
                     },
                     '\t' => {
-                        editor.tab();
+                        editor.tab_h();
                     },
                     '\u{007F}' => {
                         // Handle backspaces separately
-                        editor.backspace();
+                        editor.backspace_h();
                         //editor.backspace(false);
+                    },
+                    '\u{0001}' => {
+                        // Ctrl-A -> undo
+                        editor.revert();
                     },
                     '\u{0018}' => {
                         // Ctrl-X -> break
@@ -896,7 +900,7 @@ fn main() {
                     },
                     '\u{000B}' => {
                         // Ctrl-K -> cut
-                        editor.cut();
+                        editor.cut_h();
                     },
                     '\u{000C}' => {
                         // Ctrl-L -> Set mark
@@ -907,7 +911,7 @@ fn main() {
                         //editor.paste();
                         //TODO Implement
                         //break;
-                        editor.paste();
+                        editor.paste_h();
                     },
                     '\u{0017}' => {
                         // Ctrl-W -> Find
@@ -921,7 +925,7 @@ fn main() {
                             Some((search_string, Some(replace_string))) => {
                                 editor.clear_search();
                                 editor.find_all(search_string, 0);
-                                editor.replace_all(replace_string);
+                                editor.replace_all_h(replace_string);
                             },
                             None => {}
                         }
@@ -941,7 +945,7 @@ fn main() {
                         beep();
                     },
                     _ => {
-                        editor.type_character(c);
+                        editor.type_character_h(c);
                         //break;
                     }
                 }

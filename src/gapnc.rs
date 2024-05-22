@@ -1110,7 +1110,7 @@ impl GapEditor {
         self.push_history(ag);
     }
 
-    pub fn tabs_h(&mut self) {
+    pub fn tab_h(&mut self) {
         let ag = self.tab();
         self.push_history(ag);
     }
