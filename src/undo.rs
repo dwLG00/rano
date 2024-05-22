@@ -2,8 +2,9 @@ pub enum Action {
     Insert(usize, char, usize), // Insert(position, character, end_position)
     Newline(usize, usize), // Newline(position, end_position
     Delete(usize, char, usize), // Delete(position, deleted_character, end_position)
-    Replace(usize, usize, String, String, usize), // Replace(start_position, range_left, replaced_string, replace_string, end_position)
-    Cut(usize, usize, usize) // Cut(range_left, range_right, end_position)
+    Replace(usize, String, String), // Replace(range_left, replaced_string, replace_string)
+    Cut(usize, String, usize), // Cut(range_left, cut_string, end_position)
+    Paste(usize, String, usize) // Paste(start_position, pasted_string, end_position)
 }
 
 pub enum ActionGroup {

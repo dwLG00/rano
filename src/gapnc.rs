@@ -687,7 +687,7 @@ impl GapEditor {
     }
 
     // Cut/Copy/Paste
-    pub fn cut(&mut self) {
+    pub fn cut(&mut self) -> undo::ActionGroup {
         // Cuts the selected text, or if no text is
         // selected, the current line
 
@@ -709,7 +709,10 @@ impl GapEditor {
             lmark
         };
 
-        self.clipboard.push(self.buffer.cut(lmark, rmark, new_cursor_pos));
+        let cut_vector = self.buffer.cut(lmark, rmark, new_cursor_pos);
+        let cut_string = cut_vector.clone().iter().collect();
+
+        self.clipboard.push(cut_vector);
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
         self.move_cursor_to();
 
@@ -717,6 +720,8 @@ impl GapEditor {
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
+
+        undo::ActionGroup::Singleton(undo::Action::Cut(lmark, cut_string, new_cursor_pos))
     }
 
     pub fn copy(&mut self) {
@@ -733,7 +738,7 @@ impl GapEditor {
         self.clipboard_cursor = Some(self.clipboard.len() - 1);
     }
 
-    pub fn insert_buffer(&mut self, buffer: &Vec<char>) {
+    pub fn insert_buffer(&mut self, buffer: &Vec<char>) -> undo::ActionGroup {
         // Inserts buffer at cursor
 
         // Handle moving the selected regions
@@ -751,22 +756,30 @@ impl GapEditor {
         */
         self.fix_regions(Adjust::Increment(buffer.len()));
 
+        let start_gap_position = self.buffer.gap_position;
+        let paste_string: String = buffer.to_vec().iter().collect();
+
         self.buffer.insert_buffer(buffer);
+
+        let end_gap_position = self.buffer.gap_position;
 
         // Cleanup
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
+
+        undo::ActionGroup::Singleton(undo::Action::Paste(start_gap_position, paste_string, end_gap_position))
     }
 
-    pub fn paste(&mut self) {
+    pub fn paste(&mut self) -> Option<undo::ActionGroup> {
         // Pastes the cut buffer at the cursor position
         if let Some(clipboard_cursor) = self.clipboard_cursor {
             match self.clipboard.get(clipboard_cursor) {
-                Some(buffer) => { self.insert_buffer(&((*buffer).clone())); },
-                None => { beep(); return; }
+                Some(buffer) => { return Some(self.insert_buffer(&((*buffer).clone()))); },
+                None => { beep(); return None; }
             }
         }
+        None
         //self.insert_buffer(*buffer.clone());
     }
 
@@ -844,7 +857,7 @@ impl GapEditor {
         }
     }
 
-    pub fn replace(&mut self, range: (usize, usize), replace_with: String) {
+    pub fn replace(&mut self, range: (usize, usize), replace_with: String) -> undo::ActionGroup {
         // Replaces the selected range with the given string
         // These are Dijkstra ranges, unlike the select range..
 
@@ -862,7 +875,8 @@ impl GapEditor {
         };
 
         // Move the cursor to range_l after so that we don't have to move the cursor when pasting
-        self.buffer.cut(range_l, range_r - 1, range_l); // Dijkstra to inclusive range
+        let buffer = self.buffer.cut(range_l, range_r - 1, range_l); // Dijkstra to inclusive range
+        let replaced_string = buffer.iter().collect();
         self.buffer.insert_buffer(&replace_with.chars().collect());
         self.buffer.move_gap(new_cursor_pos);
         self.move_cursor_to();
@@ -871,24 +885,27 @@ impl GapEditor {
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
-        
+
+        undo::ActionGroup::Singleton(undo::Action::Replace(range_l, replaced_string, replace_with.clone()))        
     }
 
-    pub fn replace_all(&mut self, replace_with: String) {
+    pub fn replace_all(&mut self, replace_with: String) -> Option<undo::ActionGroup> {
         // Replace all regions in the search_hits vector
         // with the given string
 
         // Clone search_hits so we don't run into mut borrow issues
         let search_hits = self.search_hits.clone();
+        if search_hits.len() == 0 {
+            return None;
+        }
 
         let mut pos_diff: i32 = 0; // Use this to adjust the difference in position
-
-
+        let mut action_groups = Vec::<undo::ActionGroup>::new();
         for (l, r) in search_hits {
             let adj_l = (l as i32 + pos_diff) as usize;
             let adj_r = (r as i32 + pos_diff) as usize;
             self.buffer.move_gap(adj_r); // This makes moving the cursor to the end easier
-            self.replace((adj_l, adj_r), replace_with.clone());
+            action_groups.push(self.replace((adj_l, adj_r), replace_with.clone()));
             pos_diff += replace_with.len() as i32 - (r - l) as i32;
 
             // Debug
@@ -914,6 +931,8 @@ impl GapEditor {
         self.smart_cursor_flag = false;
         self.set_save();
         self.deselect_marks();
+
+        Some(undo::merge_action_groups(action_groups))
     }
 
     pub fn clear_search(&mut self) {
