@@ -360,7 +360,7 @@ impl GapEditor {
         let end_gap_position = self.buffer.gap_position; // for history
 
         self.set_save(); // Modified the buffer, set flag
-        undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, character, end_gap_position))
+        undo::ActionGroup::Singleton(undo::Action::TypeChar(start_gap_position, character, end_gap_position))
     }
 
     pub fn newline(&mut self) -> undo::ActionGroup {
@@ -768,7 +768,7 @@ impl GapEditor {
         self.set_save();
         self.deselect_marks();
 
-        undo::ActionGroup::Singleton(undo::Action::Paste(start_gap_position, paste_string))
+        undo::ActionGroup::Singleton(undo::Action::Insert(start_gap_position, paste_string))
     }
 
     pub fn paste(&mut self) -> Option<undo::ActionGroup> {
@@ -1013,6 +1013,51 @@ impl GapEditor {
     pub fn pop_search_regions(&mut self, lmark: usize, rmark: usize) {
         // Removes all search results with bounds within [lmark, rmark]
         self.search_hits = self.search_hits.iter().filter(|(l, r)| *l < lmark || *r > rmark).cloned().collect();
+    }
+
+    pub fn execute_action(&mut self, action: undo::Action) {
+        // Executes an action
+        match action {
+            undo::Action::TypeChar(start, ch, _) => {
+                self.buffer.move_gap(start);
+                self.type_character(ch);
+            },
+            undo::Action::Newline(start, _) => {
+                self.buffer.move_gap(start);
+                self.newline();
+            },
+            undo::Action::Delete(start, _, _) => {
+                self.buffer.move_gap(start);
+                self.backspace();
+            },
+            undo::Action::Replace(range_l, replaced, replacing) => {
+                let range_r = range_l + replaced.len() - 1;
+                self.replace((range_l, range_r), replacing.clone());
+            },
+            undo::Action::Cut(range_l, cut_string) => {
+                
+            },
+            undo::Action::Insert(range_l, paste_string) => {
+                self.buffer.move_gap(range_l);
+                self.insert_buffer(&paste_string.chars().collect());
+            }
+            _ => {}
+        }
+    }
+
+    // History
+    pub fn execute_action_group(&mut self, actions: undo::ActionGroup) {
+        // Executes an action group
+        match actions {
+            undo::ActionGroup::Singleton(action) => {
+                self.execute_action(action);
+            },
+            undo::ActionGroup::Multiple(actions) => {
+                for action in actions { 
+                    self.execute_action(action);
+                }
+            }
+        }
     }
 
     // Saving
