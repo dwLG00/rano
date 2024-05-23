@@ -2,7 +2,19 @@
 
 pub struct Config {
     tabsize: usize
-    
+}
+
+enum Command {
+    Set(Attribute, Value)
+}
+
+enum Attribute {
+}
+
+enum Value {
+    Number(usize),
+    String(String),
+    Atom(String)
 }
 
 pub fn default() -> Config {

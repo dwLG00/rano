@@ -9,6 +9,7 @@
 config(2): runs the given config commands on given environment
 set(2): sets the attribute defined to the target
 highlight(2): sets the region selected by given regex to given color
+load(1): loads the config file at the target
 
 e.g. 
 
