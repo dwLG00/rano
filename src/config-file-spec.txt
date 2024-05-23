@@ -1,0 +1,27 @@
+
+
+# Config will be a lisp
+
+(cmd args args args args ...)
+
+# commands
+
+config(2): runs the given config commands on given environment
+set(2): sets the attribute defined to the target
+highlight(2): sets the region selected by given regex to given color
+
+e.g. 
+
+```
+(config true
+    (list
+        (set tabsize 8)
+    )
+)
+(config (fileext? ".py")
+    (list
+        (set tabsize 4)
+        (highlight "(^|[[:blank:]])#.*" blue)
+    )
+)
+```
