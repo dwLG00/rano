@@ -14,7 +14,7 @@ use regex::Regex;
 use crate::gap_buffer;
 use crate::colors;
 use crate::undo;
-use crate::syntax_highlighting
+use crate::syntax_highlighting;
 
 type WindowYX = (usize, usize);
 type Range = (usize, usize); // Dijkstra range: [a, b)
@@ -92,8 +92,9 @@ impl GapEditor {
         }
     }
 
-    pub fn display(&self, start: usize) {
+    pub fn display_at_frame_cursor(&self) {
         // Starts with the char at start, and outputs all characters that will fit in window
+        let start = self.frame_cursor;
         let (height, width) = self.size;
         let mut start_x = 0;
         let mut start_y = 0;
@@ -149,8 +150,45 @@ impl GapEditor {
         }
     }
 
-    pub fn display_at_frame_cursor(&self) {
-        self.display(self.frame_cursor);
+    fn get_frame_bounds(&self) -> usize {
+        // Computes the size of the displayed window
+        // starting from the frame cursor, and returns
+        // the exclusive end range [frame_cursor, end)
+
+        let start = self.frame_cursor;
+        let mut init_y = 0;
+        let mut init_x = 0;
+        getyx(self.window, &mut init_y, &mut init_x); // Get the initial ncurses cursor position
+
+        let mut cur_y = 0;
+        let mut cur_x = 0;
+        let mut new_y = 0;
+        let mut new_x = 0;
+
+        let mut counter: usize = 0;
+
+        // Display the characters
+        for i in start..self.buffer.len() {
+            counter += 1;
+            if let Some(ch) = self.buffer.get(i) {
+                match ch {
+                    '\n' => {
+                        getyx(self.window, &mut cur_y, &mut cur_x);
+                        wmove(self.window, cur_y + 1, 0);
+                    },
+                    _ => {
+                        wmove(self.window, cur_y, cur_x + 1);
+                    }
+                }
+                getyx(self.window, &mut cur_y, &mut cur_x);
+                if cur_y == new_y && cur_x == new_x {
+                    break;
+                }
+                new_y = cur_y;
+                new_x = cur_x;
+            }
+        }
+        start + counter
     }
 
     pub fn deselect_marks(&mut self) {
