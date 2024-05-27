@@ -17,6 +17,12 @@ pub struct Paint {
     color: u64
 }
 
+impl SyntaxHighlight {
+    pub fn new(regex: Regex, color: u64) -> SyntaxHighlight {
+        SyntaxHighlight { regex: regex, color: color }
+    }
+}
+
 impl HighlightRules {
     pub fn new(rules: Vec<SyntaxHighlight>) -> HighlightRules {
         HighlightRules { rules: rules }

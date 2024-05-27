@@ -722,6 +722,7 @@ fn main() {
     start_color();
     init_pair(colors::CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
     init_pair(colors::CP_SEARCH, COLOR_BLACK, COLOR_YELLOW);
+    init_pair(colors::CP_SYNTAX_DEBUG, COLOR_RED, COLOR_BLACK);
 
     // Create windows
     let mut windows = Vec::new();
@@ -759,8 +760,16 @@ fn main() {
         panic!("More than 1 argument provided!");
     }
 
+    // Manually adding regex syntax highlighting rules
+    /*
+    let highlighting_string = r"fn [a-z_0-9]+";
+    let re = Regex::new(highlighting_string).unwrap();
+    let hl = syntax_highlighting::SyntaxHighlight::new(re, COLOR_PAIR(colors::CP_SYNTAX_DEBUG));
+    let syntax_rules: Vec<syntax_highlighting::SyntaxHighlight> = vec![hl];
+    editor.set_highlight_rules(syntax_highlighting::HighlightRules::new(syntax_rules));
+    */
 
-
+    // Initialize rest
     draw_control_bar(ctrl_window);
     editor.display_at_frame_cursor();
     //editor.move_cursor_to(editor_window);

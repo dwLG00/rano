@@ -95,6 +95,10 @@ impl GapEditor {
         }
     }
 
+    pub fn set_highlight_rules(&mut self, highlight_rules: syntax_highlighting::HighlightRules) {
+        self.highlight_rules = Some(highlight_rules);
+    }
+
     pub fn display_at_frame_cursor(&self) {
         // Starts with the char at start, and outputs all characters that will fit in window
         let start = self.frame_cursor;
