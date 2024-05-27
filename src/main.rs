@@ -16,6 +16,7 @@ mod undo;
 mod gapnc;
 mod colors;
 mod syntax_highlighting;
+mod syntax_highlighting_demo;
 
 // Missing keycodes
 // Shift Arrow
@@ -760,10 +761,11 @@ fn main() {
     /*
     let highlighting_string = r"fn [a-z_0-9]+";
     let re = Regex::new(highlighting_string).unwrap();
-    let hl = syntax_highlighting::SyntaxHighlight::new(re, COLOR_PAIR(colors::CP_SYNTAX_DEBUG));
+    let hl = syntax_highlighting::SyntaxHighlight::new(re, COLOR_PAIR(colors::CP_RED) | A_BOLD);
     let syntax_rules: Vec<syntax_highlighting::SyntaxHighlight> = vec![hl];
     editor.set_highlight_rules(syntax_highlighting::HighlightRules::new(syntax_rules));
     */
+    editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
 
     // Initialize rest
     draw_control_bar(ctrl_window);
