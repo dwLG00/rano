@@ -717,12 +717,8 @@ fn main() {
     noecho();
     nonl();
 
-    // Initialize Colors
-    use_default_colors();
-    start_color();
-    init_pair(colors::CP_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
-    init_pair(colors::CP_SEARCH, COLOR_BLACK, COLOR_YELLOW);
-    init_pair(colors::CP_SYNTAX_DEBUG, COLOR_RED, COLOR_BLACK);
+    // Initialize colors
+    colors::init_colors();
 
     // Create windows
     let mut windows = Vec::new();
