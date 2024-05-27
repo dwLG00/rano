@@ -15,6 +15,7 @@ mod gap_buffer;
 mod undo;
 mod gapnc;
 mod colors;
+mod syntax_highlighting;
 
 // Missing keycodes
 // Shift Arrow

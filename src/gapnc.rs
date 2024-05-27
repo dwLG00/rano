@@ -14,6 +14,7 @@ use regex::Regex;
 use crate::gap_buffer;
 use crate::colors;
 use crate::undo;
+use crate::syntax_highlighting
 
 type WindowYX = (usize, usize);
 type Range = (usize, usize); // Dijkstra range: [a, b)
