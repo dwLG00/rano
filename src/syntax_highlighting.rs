@@ -4,7 +4,7 @@ use std::cmp::max;
 
 pub struct SyntaxHighlight {
     regex: Regex,
-    color: i32
+    color: u64
 }
 
 pub struct HighlightRules {
@@ -14,7 +14,7 @@ pub struct HighlightRules {
 pub struct Paint {
     region_left: usize,
     region_right: usize,
-    color: i32
+    color: u64
 }
 
 impl HighlightRules {
@@ -50,5 +50,20 @@ impl HighlightRules {
             }
         }
         paints
+    }
+}
+
+impl Paint {
+    pub fn find_match(paints: &Vec<Paint>, idx: usize) -> Option<u64> {
+        // Finds the first paint in the vector s.t. index is within the
+        // bounds of the paint region, and returns the color (or None if
+        // there are no matches)
+
+        for paint in paints {
+            if paint.region_left <= idx && idx < paint.region_right {
+                return Some(paint.color);
+            }
+        }
+        None
     }
 }

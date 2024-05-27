@@ -55,6 +55,8 @@ pub struct GapEditor {
     // History
     history: Vec<undo::ActionGroup>,
     redo_history: Vec<undo::ActionGroup>,
+    // Syntax Highlighting
+    highlight_rules: Option<syntax_highlighting::HighlightRules>,
     // Other configurations
     tab_size: usize
 }
@@ -88,6 +90,7 @@ impl GapEditor {
             search_hits: Vec::<Range>::new(),
             history: Vec::<undo::ActionGroup>::new(),
             redo_history: Vec::<undo::ActionGroup>::new(),
+            highlight_rules: None,
             tab_size: TAB_SIZE
         }
     }
@@ -122,6 +125,13 @@ impl GapEditor {
             (0, 0)
         };
 
+        // Compute highlight regex
+        let right_bound = self.get_frame_bound();
+        let maybe_paint_regions = match &self.highlight_rules {
+            Some(highlight_rules) => Some(highlight_rules.highlight_region(self.buffer.export(), start, right_bound)),
+            None => None
+        };
+
         // Display the characters
         for i in start..self.buffer.len() {
             if let Some(ch) = self.buffer.get(i) {
@@ -135,6 +145,12 @@ impl GapEditor {
                             waddch_with_highlight(self.window, *ch as chtype);
                         } else if self.index_in_search_hits(i) {
                             waddch_with_search(self.window, *ch as chtype);
+                        } else if let Some(ref paint_regions) = maybe_paint_regions {
+                            if let Some(color) = syntax_highlighting::Paint::find_match(&paint_regions, i) {
+                                waddch_with_color(self.window, *ch as chtype, color);
+                            } else {
+                                waddch(self.window, *ch as chtype);
+                            }
                         } else {
                             waddch(self.window, *ch as chtype);
                         }
@@ -150,7 +166,7 @@ impl GapEditor {
         }
     }
 
-    fn get_frame_bounds(&self) -> usize {
+    fn get_frame_bound(&self) -> usize {
         // Computes the size of the displayed window
         // starting from the frame cursor, and returns
         // the exclusive end range [frame_cursor, end)
@@ -188,6 +204,8 @@ impl GapEditor {
                 new_x = cur_x;
             }
         }
+
+        wmove(self.window, init_y, init_x);
         start + counter
     }
 
@@ -1341,6 +1359,13 @@ fn waddch_with_search(window: WINDOW, ch: chtype) {
     wattron(window, COLOR_PAIR(colors::CP_SEARCH));
     waddch(window, ch);
     wattroff(window, COLOR_PAIR(colors::CP_SEARCH));
+}
+
+fn waddch_with_color(window: WINDOW, ch: chtype, color: u64) {
+    // Add character with user-provided color
+    wattron(window, color);
+    waddch(window, ch);
+    wattroff(window, color);
 }
 
 fn debug_wait_for_input(window: WINDOW) {
