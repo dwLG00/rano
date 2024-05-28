@@ -710,7 +710,6 @@ fn escape_regex(string: String) -> Option<String> {
 }
 
 // Main loop
-
 fn main() {
     setlocale(constants::LcCategory::all, ""); // We need this to display weird unicode characters
     initscr();
