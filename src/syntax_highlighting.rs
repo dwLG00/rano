@@ -106,6 +106,7 @@ impl HighlightRules {
                 while !buffer.is_char_boundary(index) {
                     index += 1;
                 }
+                //if skip_over > 0 { panic!() };
                 match highlight.regex.find(&buffer[index..]) {
                     Some(m) => {
                         if m.start() + index >= region_right { // Region is entirely after the window
@@ -115,8 +116,18 @@ impl HighlightRules {
                             index += m.end() + 1;
                             continue;
                         }
+
+                        let mut unicode_adjust = 0;
+                        for i in m.start()..m.end() {
+                            if !buffer.is_char_boundary(i + index) {
+                                unicode_adjust += 1;
+                            }
+                        }
+
+                        //if unicode_adjust > 0 { panic!(); }
+
                         let start = m.start() + index;
-                        let end = m.end() + index;
+                        let end = m.end() + index - unicode_adjust;
 
                         paints.push(Paint { region_left: max(region_left, start), region_right: min(region_right, end), color: highlight.color });
                         index = end + 1;

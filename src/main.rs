@@ -715,7 +715,7 @@ fn main() {
     //setlocale(constants::LcCategory::all, ""); // We need this to display weird unicode characters
     //setlocale(constants::LcCategory::all, "en_US.UTF-8");
     //setlocale(LcCategory::all, "en_US.UTF-8");
-    setlocale(LcCategory::all, "");
+    //setlocale(LcCategory::all, "");
     initscr();
     raw();
     noecho();
