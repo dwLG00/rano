@@ -31,6 +31,34 @@ impl ITreeNode {
         ITreeNode { val: paint, lnode: None, rnode: None, max: max_value }
     }
 
+    fn from_paints(paints: &[Paint]) -> Option<ITreeNode> {
+        if paints.len() == 0 {
+            return None;
+        }
+
+        if paints.len() == 1 {
+            let singleton = paints[0];
+            return Some(ITreeNode::new(singleton));
+        }
+
+        if paints.len() == 2 {
+            let left = paints[0];
+            let right = paints[1];
+            let mut left_node = ITreeNode::new(left);
+            let right_node = ITreeNode::new(right);
+            left_node.rnode = Some(Box::new(right_node));
+            return Some(left_node);
+        }
+
+        let center: usize = paints.len() / 2;
+        let left_node: Option<ITreeNode> = Self::from_paints(&paints[..center]);
+        let right_node: Option<ITreeNode> = Self::from_paints(&paints[center+1..]);
+        let mut middle = ITreeNode::new(paints[center]);
+        middle.lnode = left_node.map(Box::new);
+        middle.rnode = right_node.map(Box::new);
+        Some(middle)
+    }
+
     pub fn find_paints(&self, idx: usize) -> Vec<Paint> {
         // Finds all paints that intersect with an index
         let mut vec = Vec::<Paint>::new();
@@ -45,12 +73,12 @@ impl ITreeNode {
         }
         if let Some(ref left_node) = self.lnode {
             if left_node.max > idx {
-                left_node.find_points_recursive(idx, vec);
+                left_node.find_paints_recursive(idx, vec);
                 return;
             }
         }
         if let Some(ref right_node) = self.rnode {
-            right_node.find_points_recursive(idx, vec);
+            right_node.find_paints_recursive(idx, vec);
         }
     }
 }
