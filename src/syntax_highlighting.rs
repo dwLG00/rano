@@ -2,6 +2,13 @@ use regex::Regex;
 use std::cmp::min;
 use std::cmp::max;
 
+pub struct ITreeNode {
+    val: Paint,
+    lnode: Option<Box<ITreeNode>>,
+    rnode: Option<Box<ITreeNode>>,
+    max: usize
+}
+
 pub struct SyntaxHighlight {
     regex: Regex,
     color: u64
@@ -11,10 +18,41 @@ pub struct HighlightRules {
     rules: Vec<SyntaxHighlight>
 }
 
+#[derive(Clone, Copy)]
 pub struct Paint {
     region_left: usize,
     region_right: usize,
     color: u64
+}
+
+impl ITreeNode {
+    pub fn new(paint: Paint) -> ITreeNode {
+        let max_value = paint.region_right;
+        ITreeNode { val: paint, lnode: None, rnode: None, max: max_value }
+    }
+
+    pub fn find_paints(&self, idx: usize) -> Vec<Paint> {
+        // Finds all paints that intersect with an index
+        let mut vec = Vec::<Paint>::new();
+        self.find_paints_recursive(idx, &mut vec);
+        vec
+    }
+
+    fn find_paints_recursive(&self, idx: usize, vec: &mut Vec<Paint>) {
+        // Tail call optimized recursive find_points
+        if self.val.region_left <= idx && idx < self.val.region_right {
+            vec.push(self.val);
+        }
+        if let Some(ref left_node) = self.lnode {
+            if left_node.max > idx {
+                left_node.find_points_recursive(idx, vec);
+                return;
+            }
+        }
+        if let Some(ref right_node) = self.rnode {
+            right_node.find_points_recursive(idx, vec);
+        }
+    }
 }
 
 impl SyntaxHighlight {
