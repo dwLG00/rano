@@ -36,6 +36,10 @@ impl HighlightRules {
         for highlight in &self.rules {
             let mut index = 0;
             while index < region_right {
+                // Skip over the middle of unicode
+                while !buffer.is_char_boundary(index) {
+                    index += 1;
+                }
                 match highlight.regex.find(&buffer[index..]) {
                     Some(m) => {
                         if m.start() + index >= region_right { // Region is entirely after the window
