@@ -57,6 +57,8 @@ pub struct GapEditor {
     redo_history: Vec<undo::ActionGroup>,
     // Syntax Highlighting
     highlight_rules: Option<syntax_highlighting::HighlightRules>,
+    regex_tree: Option<syntax_highlighting::PaintTree>,
+    recompile_regex_tree_flag: bool,
     // Other configurations
     tab_size: usize
 }
@@ -91,6 +93,8 @@ impl GapEditor {
             history: Vec::<undo::ActionGroup>::new(),
             redo_history: Vec::<undo::ActionGroup>::new(),
             highlight_rules: None,
+            regex_tree: None,
+            recompile_regex_tree_flag: true,
             tab_size: TAB_SIZE
         }
     }
@@ -99,7 +103,7 @@ impl GapEditor {
         self.highlight_rules = Some(highlight_rules);
     }
 
-    pub fn display_at_frame_cursor(&self) {
+    pub fn display_at_frame_cursor(&mut self) {
         // Starts with the char at start, and outputs all characters that will fit in window
         let start = self.frame_cursor;
         let (height, width) = self.size;
@@ -130,11 +134,32 @@ impl GapEditor {
         };
 
         // Compute highlight regex
-        let right_bound = self.get_frame_bound();
+        let buffer = self.buffer.export();
+        let right_bound = (&buffer).len();
+        if self.recompile_regex_tree_flag {
+            match &self.highlight_rules {
+                Some(highlight_rules) => {
+                    let paint_vector = highlight_rules.highlight_region(buffer, 0, right_bound);
+                    let new_paint_tree = syntax_highlighting::paint_tree_from_vecs(paint_vector);
+                    self.regex_tree = Some(new_paint_tree);
+                    self.recompile_regex_tree_flag = false;
+                },
+                _ => {}
+            }
+        }
+
+        /*
         let maybe_paint_regions = match &self.highlight_rules {
-            Some(highlight_rules) => Some(highlight_rules.highlight_region(self.buffer.export(), start, right_bound)),
+            Some(highlight_rules) => {
+                if self.recompile_regex_tree_flag {
+                    Some(highlight_rules.highlight_region(self.buffer.export(), start, right_bound))
+                } else {
+                    None
+                }
+            },
             None => None
         };
+        */
 
         // Display the characters
         for i in start..self.buffer.len() {
@@ -149,8 +174,15 @@ impl GapEditor {
                             waddch_with_highlight(self.window, *ch as chtype);
                         } else if self.index_in_search_hits(i) {
                             waddch_with_search(self.window, *ch as chtype);
-                        } else if let Some(ref paint_regions) = maybe_paint_regions {
+                        } else if let Some(ref regex_tree) = self.regex_tree {
+                            /*
                             if let Some(color) = syntax_highlighting::Paint::find_match(&paint_regions, i) {
+                                waddch_with_color(self.window, *ch as chtype, color);
+                            } else {
+                                waddch(self.window, *ch as chtype);
+                            }
+                            */
+                            if let Some(color) = syntax_highlighting::paint_tree_get_color(regex_tree, i) {
                                 waddch_with_color(self.window, *ch as chtype, color);
                             } else {
                                 waddch(self.window, *ch as chtype);
@@ -1238,20 +1270,28 @@ impl GapEditor {
         self.redo_history.clear();
     }
 
+    // Handles Regex Tree Recompilation
+    pub fn recompile_regex_tree(&mut self) {
+        self.recompile_regex_tree_flag = true;
+    }
+
     // Actions that modify history
     pub fn type_character_h(&mut self, ch: char) {
         let ag = self.type_character(ch, false);
         self.push_history(ag);
+        self.recompile_regex_tree();
     }
 
     pub fn newline_h(&mut self) {
         let ag = self.newline(false);
         self.push_history(ag);
+        self.recompile_regex_tree();
     }
 
     pub fn tab_h(&mut self) {
         let ag = self.tab(false);
         self.push_history(ag);
+        self.recompile_regex_tree();
     }
 
     pub fn backspace_h(&mut self) {
@@ -1260,17 +1300,22 @@ impl GapEditor {
             Some(ag) => { self.push_history(ag); },
             None => {}
         };
+        self.recompile_regex_tree();
     }
 
     pub fn cut_h(&mut self) {
         let ag = self.cut();
         self.push_history(ag);
+        self.recompile_regex_tree();
     }
 
     pub fn paste_h(&mut self) {
         let maybe_ag = self.paste();
         match maybe_ag {
-            Some(ag) => { self.push_history(ag); },
+            Some(ag) => {
+                self.push_history(ag);
+                self.recompile_regex_tree();
+            },
             None => { beep(); }
         };
     }
@@ -1278,12 +1323,16 @@ impl GapEditor {
     pub fn replace_h(&mut self, range: (usize, usize), replace_with: String) {
         let ag = self.replace(range, replace_with, false);
         self.push_history(ag);
+        self.recompile_regex_tree();
     }
 
     pub fn replace_all_h(&mut self, replace_with: String) {
         let maybe_ag = self.replace_all(replace_with);
         match maybe_ag {
-            Some(ag) => { self.push_history(ag); },
+            Some(ag) => {
+                self.push_history(ag);
+                self.recompile_regex_tree();
+            },
             None => {}
         };
     }

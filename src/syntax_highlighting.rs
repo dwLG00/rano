@@ -1,13 +1,42 @@
+extern crate intervaltree;
 use regex::Regex;
 use std::cmp::min;
 use std::cmp::max;
+use intervaltree::{IntervalTree, Element};
 
-pub struct ITreeNode {
-    val: Paint,
-    lnode: Option<Box<ITreeNode>>,
-    rnode: Option<Box<ITreeNode>>,
-    max: usize
+// Paint Interval Tree
+pub type PaintTree = IntervalTree<usize, (u64, usize)>;
+
+impl From<Paint> for Element<usize, (u64, usize)> {
+    fn from(paint: Paint) -> Self {
+        Element { range: std::ops::Range { start: paint.region_left, end: paint.region_right }, value: (paint.color, paint.priority) }
+    }
 }
+
+pub fn paint_tree_from_vecs(vec: Vec<Paint>) -> PaintTree {
+    PaintTree::from_iter(vec)
+}
+
+pub fn paint_tree_get_color(paint_tree: &PaintTree, point: usize) -> Option<u64> {
+    // Gets the color of the lowest-priority element in paint tree
+    let hits = paint_tree.query_point(point);
+    let mut matched_color: u64 = 0;
+    let mut lowest_priority: usize = usize::MAX;
+    for hit in hits {
+        let (color, priority) = hit.value;
+        if priority < lowest_priority {
+            matched_color = color;
+            lowest_priority = priority;
+        }
+    }
+    if matched_color != 0 {
+        Some(matched_color)
+    } else {
+        None
+    }
+}
+
+// ----------------------
 
 pub struct SyntaxHighlight {
     regex: Regex,
@@ -22,65 +51,8 @@ pub struct HighlightRules {
 pub struct Paint {
     region_left: usize,
     region_right: usize,
-    color: u64
-}
-
-impl ITreeNode {
-    pub fn new(paint: Paint) -> ITreeNode {
-        let max_value = paint.region_right;
-        ITreeNode { val: paint, lnode: None, rnode: None, max: max_value }
-    }
-
-    fn from_paints(paints: &[Paint]) -> Option<ITreeNode> {
-        if paints.len() == 0 {
-            return None;
-        }
-
-        if paints.len() == 1 {
-            let singleton = paints[0];
-            return Some(ITreeNode::new(singleton));
-        }
-
-        if paints.len() == 2 {
-            let left = paints[0];
-            let right = paints[1];
-            let mut left_node = ITreeNode::new(left);
-            let right_node = ITreeNode::new(right);
-            left_node.rnode = Some(Box::new(right_node));
-            return Some(left_node);
-        }
-
-        let center: usize = paints.len() / 2;
-        let left_node: Option<ITreeNode> = Self::from_paints(&paints[..center]);
-        let right_node: Option<ITreeNode> = Self::from_paints(&paints[center+1..]);
-        let mut middle = ITreeNode::new(paints[center]);
-        middle.lnode = left_node.map(Box::new);
-        middle.rnode = right_node.map(Box::new);
-        Some(middle)
-    }
-
-    pub fn find_paints(&self, idx: usize) -> Vec<Paint> {
-        // Finds all paints that intersect with an index
-        let mut vec = Vec::<Paint>::new();
-        self.find_paints_recursive(idx, &mut vec);
-        vec
-    }
-
-    fn find_paints_recursive(&self, idx: usize, vec: &mut Vec<Paint>) {
-        // Tail call optimized recursive find_points
-        if self.val.region_left <= idx && idx < self.val.region_right {
-            vec.push(self.val);
-        }
-        if let Some(ref left_node) = self.lnode {
-            if left_node.max > idx {
-                left_node.find_paints_recursive(idx, vec);
-                return;
-            }
-        }
-        if let Some(ref right_node) = self.rnode {
-            right_node.find_paints_recursive(idx, vec);
-        }
-    }
+    color: u64,
+    priority: usize
 }
 
 impl SyntaxHighlight {
@@ -89,6 +61,7 @@ impl SyntaxHighlight {
     }
 }
 
+// Basic impl
 impl HighlightRules {
     pub fn new(rules: Vec<SyntaxHighlight>) -> HighlightRules {
         HighlightRules { rules: rules }
@@ -98,6 +71,8 @@ impl HighlightRules {
         // Returns a vector of paint regions, to be applied in order
 
         let mut paints = Vec::<Paint>::new();
+
+        let mut priority: usize = 0;
 
         for highlight in &self.rules {
             let mut index = 0;
@@ -154,11 +129,12 @@ impl HighlightRules {
                         // Calculate offset after
                         offset += get_offset_in_region(&buffer, end_index, index);
 
-                        paints.push(Paint { region_left: max(region_left, start), region_right: min(region_right, end), color: highlight.color });
+                        paints.push(Paint { region_left: max(region_left, start), region_right: min(region_right, end), color: highlight.color, priority: priority });
                     },
                     None => { break; }
                 }
             }
+            priority += 1;
         }
         paints
     }

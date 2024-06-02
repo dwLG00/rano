@@ -11,6 +11,7 @@ ncurses = { version="6.0.0", features=["wide", "wide_chtype"] }
 generational-arena = "0.2"
 regex = "1.10.4"
 petgraph = "0.6.5"
+intervaltree = "0.2.7"
 
 #[features]
 #wide = []
