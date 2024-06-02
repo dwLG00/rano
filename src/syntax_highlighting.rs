@@ -71,13 +71,13 @@ impl HighlightRules {
         // Returns a vector of paint regions, to be applied in order
 
         let mut paints = Vec::<Paint>::new();
-
         let mut priority: usize = 0;
+        let offsets = generate_offsets(&buffer);
 
         for highlight in &self.rules {
             let mut index = 0;
             let mut prev_index = 0;
-            let mut offset: usize = 0;
+            //let mut offset: usize = 0;
             let mut itcount = 0;
             while index < region_right {
                 // Set the previous index
@@ -85,7 +85,6 @@ impl HighlightRules {
                 // Skip over the middle of unicode
                 while !buffer.is_char_boundary(index) {
                     index += 1;
-                    //offset += 1;
                 }
                 //if skip_over > 0 { panic!() };
                 match highlight.regex.find(&buffer[index..]) {
@@ -95,7 +94,7 @@ impl HighlightRules {
                         }
                         if m.end() + index <= region_left { // Region is entirely before the window
                             index += m.end() + 1;
-                            offset += get_offset_in_region(&buffer, prev_index, index);
+                            //offset += get_offset_in_region(&buffer, prev_index, index);
                             continue;
                         }
 
@@ -103,12 +102,12 @@ impl HighlightRules {
                         let end_index = m.end() + index;
 
                         // Calculate the offset before
-                        offset += get_offset_in_region(&buffer, prev_index, start_index);
-                        let start = start_index - offset;
+                        //offset += get_offset_in_region(&buffer, prev_index, start_index);
+                        let start = start_index - offsets[start_index];
 
                         // Calculate offset during
-                        offset += get_offset_in_region(&buffer, start_index, end_index);
-                        let end = end_index - offset;
+                        //offset += get_offset_in_region(&buffer, start_index, end_index);
+                        let end = end_index - offsets[end_index];
                         /*
                         for i in m.start()..m.end() {
                             if !buffer.is_char_boundary(i + index) {
@@ -127,7 +126,7 @@ impl HighlightRules {
                         index = end_index + 1;
 
                         // Calculate offset after
-                        offset += get_offset_in_region(&buffer, end_index, index);
+                        //offset += get_offset_in_region(&buffer, end_index, index);
 
                         paints.push(Paint { region_left: max(region_left, start), region_right: min(region_right, end), color: highlight.color, priority: priority });
                     },
@@ -164,4 +163,19 @@ fn get_offset_in_region(buffer: &String, start_index: usize, end_index: usize) -
         }
     }
     offset
+}
+
+fn generate_offsets(buffer: &String) -> Vec<usize> {
+    // Generates a vector of offset values
+
+    let mut offsets = Vec::<usize>::new();
+    let mut offset_count: usize = 0;
+ 
+   for i in 0..buffer.len() {
+        if !buffer.is_char_boundary(i) {
+            offset_count += 1;
+        }
+        offsets.push(offset_count);
+    }
+    offsets
 }
