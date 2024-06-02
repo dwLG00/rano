@@ -7,7 +7,8 @@ pub struct GapBuffer {
     pub current_line: usize,
     pub n_lines: usize,
     gap_size: usize,
-    next_alloc_gap_size: usize
+    next_alloc_gap_size: usize,
+    pub offset: usize // Offset of chars up to gap_position
 }
 
 impl GapBuffer {
@@ -19,6 +20,7 @@ impl GapBuffer {
         file.read_to_string(&mut buffer_str);
 
         let mut n_lines = 0;
+        let mut offset = 0;
 
         for _ in 0..gap_size {
             // Push null char for the gap buffer
@@ -30,6 +32,7 @@ impl GapBuffer {
             if ch == '\n' {
                 n_lines += 1;
             }
+            offset += ch.len_utf8() - 1;
         }
 
         GapBuffer {
@@ -38,7 +41,8 @@ impl GapBuffer {
             current_line: 0,
             n_lines: n_lines,
             gap_size: gap_size,
-            next_alloc_gap_size: gap_size * 2
+            next_alloc_gap_size: gap_size * 2,
+            offset: offset
         }
     }
 
@@ -72,6 +76,7 @@ impl GapBuffer {
                     // because ch is null
                     self.current_line += 1;
                 }
+                self.offset += ch.len_utf8() - 1;
             }
         } else if new_pos < self.gap_position {
             for i in (new_pos..self.gap_position).rev() {
@@ -82,6 +87,7 @@ impl GapBuffer {
                 if ch == '\n' {
                     self.current_line -= 1;
                 }
+                self.offset -= ch.len_utf8() - 1;
             }
         } else {
             // Do nothing;
@@ -118,6 +124,7 @@ impl GapBuffer {
             self.current_line += 1;
             self.n_lines += 1;
         }
+        self.offset += ch.len_utf8() - 1;
     }
 
     pub fn pop(&mut self) -> Option<char> {
@@ -137,6 +144,7 @@ impl GapBuffer {
         self.buffer[self.gap_position - 1] = '\0';
         self.gap_position -= 1;
         self.gap_size += 1;
+        self.offset -= ch.len_utf8() - 1;
         Some(ch)
     }
 
@@ -494,4 +502,3 @@ impl GapBuffer {
         first
     }
 }
-
