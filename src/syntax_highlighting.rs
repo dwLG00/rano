@@ -101,10 +101,16 @@ impl HighlightRules {
 
         for highlight in &self.rules {
             let mut index = 0;
+            let mut prev_index = 0;
+            let mut offset: usize = 0;
+            let mut itcount = 0;
             while index < region_right {
+                // Set the previous index
+                prev_index = index;
                 // Skip over the middle of unicode
                 while !buffer.is_char_boundary(index) {
                     index += 1;
+                    offset += 1;
                 }
                 //if skip_over > 0 { panic!() };
                 match highlight.regex.find(&buffer[index..]) {
@@ -114,23 +120,41 @@ impl HighlightRules {
                         }
                         if m.end() + index <= region_left { // Region is entirely before the window
                             index += m.end() + 1;
+                            offset += get_offset_in_region(&buffer, prev_index, index);
                             continue;
                         }
 
-                        let mut unicode_adjust = 0;
+                        let start_index = m.start() + index;
+                        let end_index = m.end() + index;
+
+                        // Calculate the offset before
+                        offset += get_offset_in_region(&buffer, prev_index, start_index);
+                        let start = start_index - offset;
+
+                        // Calculate offset during
+                        offset += get_offset_in_region(&buffer, start_index, end_index);
+                        let end = end_index - offset;
+                        /*
                         for i in m.start()..m.end() {
                             if !buffer.is_char_boundary(i + index) {
                                 unicode_adjust += 1;
                             }
                         }
+                        */
 
                         //if unicode_adjust > 0 { panic!(); }
 
-                        let start = m.start() + index;
-                        let end = m.end() + index - unicode_adjust;
+                        //let start = m.start() + index - offset;
+                        //let end = m.end() + index - offset - unicode_adjust;
+
+                        //offset += unicode_adjust;
+
+                        index = end_index + 1;
+
+                        // Calculate offset after
+                        offset += get_offset_in_region(&buffer, end_index, index);
 
                         paints.push(Paint { region_left: max(region_left, start), region_right: min(region_right, end), color: highlight.color });
-                        index = end + 1;
                     },
                     None => { break; }
                 }
@@ -153,4 +177,15 @@ impl Paint {
         }
         None
     }
+}
+
+fn get_offset_in_region(buffer: &String, start_index: usize, end_index: usize) -> usize {
+    // Gets the byte offset of region in buffer
+    let mut offset = 0;
+    for i in start_index..end_index {
+        if !buffer.is_char_boundary(i) {
+            offset += 1;
+        }
+    }
+    offset
 }
