@@ -8,6 +8,22 @@ use crate::colors;
 use regex::Regex;
 use ncurses::*;
 
+/*
+pub fn build_highlighting_rules() -> HighlightRules {
+    // Builds highlighting rules
+
+    let syntax_highlightings: Vec<SyntaxHighlight> = vec![
+        // Classes
+        SyntaxHighlight::new(
+            Regex::new(r"[A-Z][A-Za-z0-9]+").unwrap(),
+            COLOR_PAIR(colors::CP_MAGENTA)
+        )
+    ];
+
+    HighlightRules::new(syntax_highlightings)
+}
+*/
+
 pub fn build_highlighting_rules() -> HighlightRules {
     // Builds highlighting rules
 

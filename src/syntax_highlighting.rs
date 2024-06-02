@@ -110,7 +110,7 @@ impl HighlightRules {
                 // Skip over the middle of unicode
                 while !buffer.is_char_boundary(index) {
                     index += 1;
-                    offset += 1;
+                    //offset += 1;
                 }
                 //if skip_over > 0 { panic!() };
                 match highlight.regex.find(&buffer[index..]) {
