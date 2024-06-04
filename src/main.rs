@@ -768,7 +768,7 @@ fn main() {
     let syntax_rules: Vec<syntax_highlighting::SyntaxHighlight> = vec![hl];
     editor.set_highlight_rules(syntax_highlighting::HighlightRules::new(syntax_rules));
     */
-    editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
+    //editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
 
     // Initialize rest
     draw_control_bar(ctrl_window);
