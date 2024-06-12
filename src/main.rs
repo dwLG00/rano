@@ -83,7 +83,10 @@ fn load_ranorc() -> Result<Option<config::Config>, Box<dyn std::error::Error>> {
                     file.read_to_string(&mut buffer);
                     let config_file_contents: Vec<char> = buffer.chars().collect();
                     match config::tokenize(config_file_contents) {
-                        Ok(tokens) => Ok(config::parse(tokens)),
+                        Ok(tokens) => match config::parse(tokens) {
+                            Ok(maybe_config) => Ok(maybe_config),
+                            Err(e) => Err(Box::new(e))
+                        },
                         Err(e) => Err(Box::new(e))
                     }
                 },

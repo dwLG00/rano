@@ -27,6 +27,14 @@ custom_error!{pub TokenizationError
     CantParseNumber{location: usize} = "Number unable to be parsed at position {location}."
 }
 
+custom_error!{pub ParseError
+    InvalidCommand = "Found unknown command while parsing",
+    InvalidColor = "Expected valid color",
+    InvalidArgument = "Invalid argument provided",
+    WrongArgumentCount{ expected: usize, provided: usize } = "Invalid number of arguments provided (expected: {expected}, provided: {provided})",
+    UnfinishedClause = "Final clause not terminated with semicolon"
+}
+
 // Parsing functions
 pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizationError> {
     // Ignores whitespace, unless quoted
@@ -45,7 +53,7 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizationError> {
                     stack.push(*c);
                 } else if comment_flag {
                     // Ignore entirely
-                } else if number_flag {
+                } else if number_flag && stack.len() > 0 {
                     let s: String = stack.clone().into_iter().collect();
                     match s.parse::<usize>() {
                         Ok(n) => { tokens.push(Token::Number(n)); },
@@ -54,12 +62,14 @@ pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizationError> {
                     tokens.push(Token::Semicolon);
                     stack.clear();
                     number_flag = false;
-                } else {
+                } else if stack.len() > 0 {
                     // Merge stack contents into a single string and push a keyword
                     let s: String = stack.clone().into_iter().collect();
                     tokens.push(Token::Keyword(s));
                     tokens.push(Token::Semicolon);
                     stack.clear();
+                } else {
+                    tokens.push(Token::Semicolon);
                 }
             },
             '"' => {
@@ -240,7 +250,7 @@ pub fn token_is_color(token: Token) -> bool {
     }
 }
 
-pub fn parse(tokens: Vec<Token>) -> Option<Config> {
+pub fn parse(tokens: Vec<Token>) -> Result<Option<Config>, ParseError> {
     // Parses a vector of tokens into a config file
     let mut syntax_highlighting_vector = Vec::<syntax_highlighting::SyntaxHighlight>::new();
     let mut stack = Vec::<Token>::new();
@@ -249,24 +259,25 @@ pub fn parse(tokens: Vec<Token>) -> Option<Config> {
         match token {
             Token::Semicolon => {
                 // As of right now, only support `color/2`
-                if stack.len() != 3 { return None; }
+                if stack.len() != 3 { return Err(ParseError::WrongArgumentCount{expected: 3, provided: stack.len()}); }
                 match &stack[0] {
-                    Token::Keyword(s) => { if s != "color" { return None; }},
-                    _ => { return None; }
+                    Token::Keyword(s) => { if s != "color" { return Err(ParseError::InvalidCommand); }},
+                    _ => { return Err(ParseError::InvalidCommand); }
                 }
                 let token_color = match token_to_color(stack[1].clone()) {
                     Some(color) => color,
-                    None => { return None; }
+                    None => { return Err(ParseError::InvalidColor); }
                 };
                 match &stack[2] {
                     Token::StringLiteral(s) => {
                         let sh = syntax_highlighting::SyntaxHighlight::new(
-                            Regex::new(&regex::escape(&s)).unwrap(),
+                            //Regex::new(&regex::escape(&s)).unwrap(),
+                            Regex::new(&s).unwrap(),
                             token_color
                         );
                         syntax_highlighting_vector.push(sh);
                     },
-                    _ => { return None; }
+                    _ => { return Err(ParseError::InvalidArgument); }
                 }
                 stack.clear();
             },
@@ -278,8 +289,8 @@ pub fn parse(tokens: Vec<Token>) -> Option<Config> {
 
     if stack.len() > 0 {
         // Unfinished clause in file, parse error...
-        return None;
+        return Err(ParseError::UnfinishedClause);
     }
 
-    Some(Config { highlight_rules: syntax_highlighting::HighlightRules::new(syntax_highlighting_vector) })
+    Ok(Some(Config { highlight_rules: syntax_highlighting::HighlightRules::new(syntax_highlighting_vector) }))
 }
