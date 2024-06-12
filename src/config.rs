@@ -1,13 +1,14 @@
 extern crate ncurses;
+extern crate custom_error;
 use crate::syntax_highlighting;
 use crate::colors;
 use ncurses::*;
+use custom_error::custom_error;
 use regex::Regex;
+use std::{error::Error, fmt};
 
 // Data Structures
-#[derive(Debug)]
-#[derive(PartialEq)]
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(String),
     StringLiteral(String),
@@ -15,12 +16,19 @@ pub enum Token {
     Semicolon,
 }
 
+#[derive(Debug)]
 pub struct Config {
     pub highlight_rules: syntax_highlighting::HighlightRules
 }
 
+// Errors
+custom_error!{pub TokenizationError
+    UnclosedQuotes{location: usize} = "Quotes unclosed at position {location}.",
+    CantParseNumber{location: usize} = "Number unable to be parsed at position {location}."
+}
+
 // Parsing functions
-pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
+pub fn tokenize(chars: Vec<char>) -> Result<Vec<Token>, TokenizationError> {
     // Ignores whitespace, unless quoted
     let mut stack = Vec::<char>::new();
     let mut tokens = Vec::<Token>::new();
@@ -29,7 +37,7 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
     let mut comment_flag = false; // Currently parsing a comment
     let mut number_flag = false; // Currently parsing a number (integer)
 
-    for c in chars.iter() {
+    for (i, c) in chars.iter().enumerate() {
         match c {
             ';' => {
                 if quote_flag {
@@ -39,7 +47,10 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
                     // Ignore entirely
                 } else if number_flag {
                     let s: String = stack.clone().into_iter().collect();
-                    tokens.push(Token::Number(s.parse::<usize>().expect("Couldn't parse into usize!")));
+                    match s.parse::<usize>() {
+                        Ok(n) => { tokens.push(Token::Number(n)); },
+                        Err(e) => { return Err(TokenizationError::CantParseNumber {location: i}); }
+                    }
                     tokens.push(Token::Semicolon);
                     stack.clear();
                     number_flag = false;
@@ -61,7 +72,7 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
                     // Ignore entirely
                 } else if stack.len() > 0 {
                     // Parse error
-                    return None;
+                    return Err(TokenizationError::UnclosedQuotes{ location: i });
                 } else {
                     quote_flag = true;
                 }
@@ -85,10 +96,13 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
                     comment_flag = false;
                 } else if quote_flag {
                     // Parse error - quotes not closed by end of line
-                    return None;
+                    return Err(TokenizationError::UnclosedQuotes{ location: i });
                 } else if number_flag {
                     let s: String = stack.clone().into_iter().collect();
-                    tokens.push(Token::Number(s.parse::<usize>().unwrap_or_else(|_| panic!("Couldn't parse into usize! {}", s))));
+                    match s.parse::<usize>() {
+                        Ok(n) => { tokens.push(Token::Number(n)); },
+                        Err(e) => { return Err(TokenizationError::CantParseNumber {location: i}); }
+                    }
                     stack.clear();
                     number_flag = false;
                 } else {
@@ -107,7 +121,10 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
                     // Ignore
                 } else if number_flag {
                     let s: String = stack.clone().into_iter().collect();
-                    tokens.push(Token::Number(s.parse::<usize>().unwrap_or_else(|_| panic!("Couldn't parse into usize! {}", s))));
+                    match s.parse::<usize>() {
+                        Ok(n) => { tokens.push(Token::Number(n)); },
+                        Err(e) => { return Err(TokenizationError::CantParseNumber {location: i}); }
+                    }
                     stack.clear();
                     number_flag = false;
                 } else {
@@ -122,12 +139,15 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
                 }
                 if quote_flag {
                     // Parse error - 'weird' whitespace found while parsing string
-                    return None;
+                    return Err(TokenizationError::UnclosedQuotes{location: i});
                 } else if comment_flag {
                     // Ignore
                 } else if number_flag {
                     let s: String = stack.clone().into_iter().collect();
-                    tokens.push(Token::Number(s.parse::<usize>().expect("Couldn't parse into usize!")));
+                    match s.parse::<usize>() {
+                        Ok(n) => { tokens.push(Token::Number(n)); },
+                        Err(e) => { return Err(TokenizationError::CantParseNumber {location: i}); }
+                    }
                     stack.clear();
                     number_flag = false;
                 } else {
@@ -165,12 +185,15 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
     if stack.len() > 0 {
         let s: String = stack.clone().into_iter().collect();
         if number_flag {
-            tokens.push(Token::Number(s.parse::<usize>().expect("Couldn't parse into usize!")));
+            match s.parse::<usize>() {
+                Ok(n) => { tokens.push(Token::Number(n)); },
+                Err(e) => { return Err(TokenizationError::CantParseNumber {location: chars.len() - 1}); }
+            }
         } else {
             tokens.push(Token::Keyword(s));
         }
     }
-    Some(tokens)
+    Ok(tokens)
 }
 
 pub fn token_to_color(token: Token) -> Option<u64> {

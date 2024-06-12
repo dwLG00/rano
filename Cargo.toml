@@ -13,6 +13,7 @@ regex = "1.10.4"
 petgraph = "0.6.5"
 intervaltree = "0.2.7"
 dirs = "5.0.1"
+custom_error = "1.9.2"
 
 #[features]
 #wide = []

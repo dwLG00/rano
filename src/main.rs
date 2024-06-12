@@ -70,7 +70,7 @@ fn file_exists(filename: String) -> bool {
     }
 }
 
-fn load_ranorc() -> Option<config::Config> {
+fn load_ranorc() -> Result<Option<config::Config>, Box<dyn std::error::Error>> {
     // Try to load ~/.nanorc as a config file
     match dirs::home_dir() {
         Some(path) => {
@@ -83,14 +83,14 @@ fn load_ranorc() -> Option<config::Config> {
                     file.read_to_string(&mut buffer);
                     let config_file_contents: Vec<char> = buffer.chars().collect();
                     match config::tokenize(config_file_contents) {
-                        Some(tokens) => config::parse(tokens),
-                        None => None
+                        Ok(tokens) => Ok(config::parse(tokens)),
+                        Err(e) => Err(Box::new(e))
                     }
                 },
-                Err(_) => None
+                Err(_) => Ok(None)
             }
         },
-        None => None
+        None => Ok(None)
     }
 }
 
@@ -799,7 +799,8 @@ fn main() {
     //editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
 
     // Maybe load config file
-    match load_ranorc() {
+    let maybe_cf = load_ranorc().unwrap();
+    match maybe_cf {
         Some(cf) => { editor.load_config_into(cf); },
         None => {}
     }
