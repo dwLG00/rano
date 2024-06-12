@@ -17,6 +17,7 @@ mod gapnc;
 mod colors;
 mod syntax_highlighting;
 mod syntax_highlighting_demo;
+mod config;
 //mod interval_tree; // WIP
 
 // Missing keycodes
