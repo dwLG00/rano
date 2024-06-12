@@ -1,7 +1,12 @@
+extern crate ncurses;
 use crate::syntax_highlighting;
+use crate::colors;
+use ncurses::*;
 
 // Data Structures
 #[derive(Debug)]
+#[derive(PartialEq)]
+#[derive(Clone)]
 pub enum Token {
     Keyword(String),
     StringLiteral(String),
@@ -10,9 +15,10 @@ pub enum Token {
 }
 
 pub struct Config {
-    
+    highlight_rules: syntax_highlighting::HighlightRules
 }
 
+// Parsing functions
 pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
     // Ignores whitespace, unless quoted
     let mut stack = Vec::<char>::new();
@@ -166,6 +172,81 @@ pub fn tokenize(chars: Vec<char>) -> Option<Vec<Token>> {
     Some(tokens)
 }
 
+pub fn token_to_color(token: Token) -> Option<u64> {
+    match token {
+        Token::Keyword(s) => {
+            match s.as_str() {
+                "red" => Some(COLOR_PAIR(colors::CP_RED)),
+                "brightred" => Some(COLOR_PAIR(colors::CP_RED) | A_BOLD),
+                "blue" => Some(COLOR_PAIR(colors::CP_BLUE)),
+                "brightblue" => Some(COLOR_PAIR(colors::CP_BLUE) | A_BOLD),
+                "green" => Some(COLOR_PAIR(colors::CP_GREEN)),
+                "brightgreen" => Some(COLOR_PAIR(colors::CP_GREEN) | A_BOLD),
+                "yellow" => Some(COLOR_PAIR(colors::CP_YELLOW)),
+                "brightyellow" => Some(COLOR_PAIR(colors::CP_YELLOW) | A_BOLD),
+                "cyan" => Some(COLOR_PAIR(colors::CP_CYAN)),
+                "brightcyan" => Some(COLOR_PAIR(colors::CP_CYAN) | A_BOLD),
+                "magenta" => Some(COLOR_PAIR(colors::CP_MAGENTA)),
+                "brightmagenta" => Some(COLOR_PAIR(colors::CP_MAGENTA) | A_BOLD),
+                "black" => Some(COLOR_PAIR(colors::CP_BLACK)),
+                "brightblack" => Some(COLOR_PAIR(colors::CP_BLACK) | A_BOLD),
+                "white" => Some(COLOR_PAIR(colors::CP_WHITE)),
+                "brightwhite" => Some(COLOR_PAIR(colors::CP_WHITE) | A_BOLD),
+                _ => None
+            }
+        },
+        _ => None
+    }
+}
+
+pub fn token_is_color(token: Token) -> bool {
+    // Matches only if token is a color code
+    match token {
+        Token::Keyword(s) => {
+            (s == "red") | (s == "brightred")
+          | (s == "blue") | (s == "brightblue")
+          | (s == "green") | (s == "brightgreen")
+          | (s == "yellow") | (s == "brightyellow")
+          | (s == "cyan") | (s == "brightcyan")
+          | (s == "magenta") | (s == "brightmagenta")
+          | (s == "black") | (s == "brightblack")
+          | (s == "white") | (s == "brightwhite")
+        },
+        _ => false
+    }
+}
+
 pub fn parse(tokens: Vec<Token>) -> Option<Config> {
+    // Parses a vector of tokens into a config file
+    let mut SyntaxHighlightingVector = Vec::<syntax_highlighting::SyntaxHighlight>::new();
+    let mut stack = Vec::<Token>::new();
+
+    for token in tokens.iter() {
+        match token {
+            Token::Semicolon => {
+                // As of right now, only support `color/2`
+                if stack.len() != 3 { return None; }
+                match &stack[0] {
+                    Token::Keyword(s) => { if s != "color" { return None; }},
+                    _ => { return None; }
+                }
+                if !token_is_color(stack[1].clone()) { return None; }
+                match &stack[2] {
+                    Token::StringLiteral(s) => {},
+                    _ => {}
+                }
+                stack.clear();
+            },
+            _ => {
+                stack.push(token.clone());
+            }
+        }
+    }
+
+    if stack.len() > 0 {
+        // Unfinished clause in file, parse error...
+        return None;
+    }
+
     None
 }

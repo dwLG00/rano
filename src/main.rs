@@ -1,3 +1,5 @@
+#![feature(const_trait_impl)]
+#![feature(effects)]
 extern crate ncurses;
 use std::char;
 use ncurses::*;
