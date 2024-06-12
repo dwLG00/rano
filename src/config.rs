@@ -2,6 +2,7 @@ extern crate ncurses;
 use crate::syntax_highlighting;
 use crate::colors;
 use ncurses::*;
+use regex::Regex;
 
 // Data Structures
 #[derive(Debug)]
@@ -218,7 +219,7 @@ pub fn token_is_color(token: Token) -> bool {
 
 pub fn parse(tokens: Vec<Token>) -> Option<Config> {
     // Parses a vector of tokens into a config file
-    let mut SyntaxHighlightingVector = Vec::<syntax_highlighting::SyntaxHighlight>::new();
+    let mut syntax_highlighting_vector = Vec::<syntax_highlighting::SyntaxHighlight>::new();
     let mut stack = Vec::<Token>::new();
 
     for token in tokens.iter() {
@@ -230,10 +231,19 @@ pub fn parse(tokens: Vec<Token>) -> Option<Config> {
                     Token::Keyword(s) => { if s != "color" { return None; }},
                     _ => { return None; }
                 }
-                if !token_is_color(stack[1].clone()) { return None; }
+                let token_color = match token_to_color(stack[1].clone()) {
+                    Some(color) => color,
+                    None => { return None; }
+                };
                 match &stack[2] {
-                    Token::StringLiteral(s) => {},
-                    _ => {}
+                    Token::StringLiteral(s) => {
+                        let sh = syntax_highlighting::SyntaxHighlight::new(
+                            Regex::new(&regex::escape(&s)).unwrap(),
+                            token_color
+                        );
+                        syntax_highlighting_vector.push(sh);
+                    },
+                    _ => { return None; }
                 }
                 stack.clear();
             },
@@ -248,5 +258,5 @@ pub fn parse(tokens: Vec<Token>) -> Option<Config> {
         return None;
     }
 
-    None
+    Some(Config { highlight_rules: syntax_highlighting::HighlightRules::new(syntax_highlighting_vector) })
 }
