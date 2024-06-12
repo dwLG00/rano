@@ -12,6 +12,7 @@ generational-arena = "0.2"
 regex = "1.10.4"
 petgraph = "0.6.5"
 intervaltree = "0.2.7"
+dirs = "5.0.1"
 
 #[features]
 #wide = []

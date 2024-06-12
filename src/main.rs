@@ -7,6 +7,7 @@ use std::env;
 use std::io::{Read, Write};
 use std::fs;
 use std::io;
+use dirs;
 use std::cmp::min;
 use std::path::Path;
 use std::process;
@@ -66,6 +67,30 @@ fn file_exists(filename: String) -> bool {
             _ => true
         },
         _ => true
+    }
+}
+
+fn load_ranorc() -> Option<config::Config> {
+    // Try to load ~/.nanorc as a config file
+    match dirs::home_dir() {
+        Some(path) => {
+            let mut p = path.clone();
+            p.push(".ranorc");
+            let reader = fs::File::open(p);
+            match reader {
+                Ok(mut file) => {
+                    let mut buffer = String::new();
+                    file.read_to_string(&mut buffer);
+                    let config_file_contents: Vec<char> = buffer.chars().collect();
+                    match config::tokenize(config_file_contents) {
+                        Some(tokens) => config::parse(tokens),
+                        None => None
+                    }
+                },
+                Err(_) => None
+            }
+        },
+        None => None
     }
 }
 
@@ -772,6 +797,12 @@ fn main() {
     editor.set_highlight_rules(syntax_highlighting::HighlightRules::new(syntax_rules));
     */
     //editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
+
+    // Maybe load config file
+    match load_ranorc() {
+        Some(cf) => { editor.load_config_into(cf); },
+        None => {}
+    }
 
     // Initialize rest
     draw_control_bar(ctrl_window);

@@ -15,6 +15,7 @@ use crate::gap_buffer;
 use crate::colors;
 use crate::undo;
 use crate::syntax_highlighting;
+use crate::config;
 
 type WindowYX = (usize, usize);
 type Range = (usize, usize); // Dijkstra range: [a, b)
@@ -101,6 +102,13 @@ impl GapEditor {
 
     pub fn set_highlight_rules(&mut self, highlight_rules: syntax_highlighting::HighlightRules) {
         self.highlight_rules = Some(highlight_rules);
+    }
+
+    pub fn load_config_into(&mut self, config: config::Config) {
+        // Loads config settings into GapBuffer
+
+        // For now, just set highlight rules
+        self.set_highlight_rules(config.highlight_rules.clone());
     }
 
     pub fn display_at_frame_cursor(&mut self) {

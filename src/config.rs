@@ -16,7 +16,7 @@ pub enum Token {
 }
 
 pub struct Config {
-    highlight_rules: syntax_highlighting::HighlightRules
+    pub highlight_rules: syntax_highlighting::HighlightRules
 }
 
 // Parsing functions

@@ -38,11 +38,13 @@ pub fn paint_tree_get_color(paint_tree: &PaintTree, point: usize) -> Option<u64>
 
 // ----------------------
 
+#[derive(Clone)]
 pub struct SyntaxHighlight {
     regex: Regex,
     color: u64
 }
 
+#[derive(Clone)]
 pub struct HighlightRules {
     rules: Vec<SyntaxHighlight>
 }
