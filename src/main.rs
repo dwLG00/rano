@@ -799,11 +799,20 @@ fn main() {
     //editor.set_highlight_rules(syntax_highlighting_demo::build_highlighting_rules());
 
     // Maybe load config file
-    let maybe_cf = load_ranorc().unwrap();
-    match maybe_cf {
-        Some(cf) => { editor.load_config_into(cf); },
-        None => {}
+    match load_ranorc() {
+        Ok(maybe_cf) => {
+            match maybe_cf {
+                Some(cf) => { editor.load_config_into(cf); },
+                None => {}
+            }
+        },
+        Err(e) => {
+            endwin();
+            eprintln!("Error reading ~/.ranorc - {}", e);
+            std::process::exit(1);
+        }
     }
+        
 
     // Initialize rest
     draw_control_bar(ctrl_window);
